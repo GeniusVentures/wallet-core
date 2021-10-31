@@ -80,6 +80,40 @@ endif()
 
 target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} PUBLIC)
 
+if(TW_UNIT_TESTS)
+    add_subdirectory(crypto/tests)
+endif()
+
+if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
+    target_compile_options(TrezorCrypto
+        PRIVATE
+            -W
+            -Wall
+            -Wextra
+            -Wimplicit-function-declaration
+            -Wredundant-decls
+            -Wstrict-prototypes
+            -Wundef
+            -Wshadow
+            -Wpointer-arith
+            -Wformat
+            -Wreturn-type
+            -Wsign-compare
+            -Wmultichar
+            -Wformat-nonliteral
+            -Winit-self
+            -Wuninitialized
+            -Wformat-security
+            -Wno-missing-braces
+            -Werror
+    )
+endif()
+
+if(WIN32)
+    target_link_libraries(TrezorCrypto bcrypt)
+endif()
+>>>>>>> ebeeb927 (Add support for Visual Studio to build scripts)
+
 target_include_directories(TrezorCrypto
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -88,10 +122,9 @@ target_include_directories(TrezorCrypto
         src
 )
 
-install(
-    TARGETS TrezorCrypto
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+install(TARGETS TrezorCrypto
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

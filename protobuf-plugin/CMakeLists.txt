@@ -27,6 +27,11 @@ include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(protoc-gen-c-typedef c_typedef.cc ${PROTO_SRCS} ${PROTO_HDRS})
+if (WIN32)
+    target_link_libraries(protoc-gen-c-typedef ${Protobuf_LIBRARIES} ${Protobuf_PROTOC_LIBRARIES})
+else()
+    target_link_libraries(protoc-gen-c-typedef protobuf -lprotoc -pthread)
+endif()
 
 if (("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
     target_link_libraries(protoc-gen-c-typedef ${Protobuf_LIBRARIES} ${Protobuf_PROTOC_LIBRARIES})
