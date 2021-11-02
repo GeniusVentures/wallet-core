@@ -122,6 +122,10 @@ target_include_directories(TrezorCrypto
         src
 )
 
+if(TW_UNIT_TESTS)
+    add_subdirectory(crypto/tests)
+endif()
+
 install(TARGETS TrezorCrypto
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

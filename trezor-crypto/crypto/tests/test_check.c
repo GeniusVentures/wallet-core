@@ -6803,7 +6803,7 @@ START_TEST(test_ed25519_keccak) {
 END_TEST
 
 START_TEST(test_ed25519_cosi) {
-  const int MAXN = 10;
+#define MAXN 10
   ed25519_secret_key keys[MAXN];
   ed25519_public_key pubkeys[MAXN];
   ed25519_secret_key nonces[MAXN];
@@ -6857,6 +6857,7 @@ START_TEST(test_ed25519_cosi) {
 
     UNMARK_SECRET_DATA(keys, sizeof(keys));
   }
+#undef MAXN 
 }
 END_TEST
 
@@ -7167,7 +7168,12 @@ static void test_bip32_ecdh(const char *curve_name, int expected_key_size,
                             const uint8_t *expected_key) {
   int res, key_size;
   HDNode alice, bob;
+#ifdef _MSC_VER
+  uint8_t *session_key1 = _alloca(expected_key_size);
+  uint8_t *session_key2 = _alloca(expected_key_size);
+#else
   uint8_t session_key1[expected_key_size], session_key2[expected_key_size];
+#endif
 
   test_bip32_ecdh_init_node(&alice, "Alice", curve_name);
   test_bip32_ecdh_init_node(&bob, "Bob", curve_name);
