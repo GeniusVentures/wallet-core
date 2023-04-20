@@ -18,8 +18,7 @@
 #include <TrustWalletCore/TWHRP.h>
 #include <TrustWalletCore/TWPublicKeyType.h>
 
-#include <TrezorCrypto/options.h>
-
+#include <TrezorCrypto/rand.h>
 #include <TrezorCrypto/bip32.h>
 #include <TrezorCrypto/bip39.h>
 #include <TrezorCrypto/cardano.h>
@@ -65,8 +64,12 @@ template <std::size_t seedSize>
 HDWallet<seedSize>::HDWallet(int strength, const std::string& passphrase)
     : passphrase(passphrase) {
     char buf[MnemonicBufLength];
+    if (!random_init()) {
+        throw std::runtime_error("Failed to initialize random number generator");
+    }
     const char* mnemonic_chars = mnemonic_generate(strength, buf, MnemonicBufLength);
     if (mnemonic_chars == nullptr) {
+        random_release();
         throw std::invalid_argument("Invalid strength");
     }
     mnemonic = mnemonic_chars;
@@ -81,6 +84,9 @@ HDWallet<seedSize>::HDWallet(const std::string& mnemonic, const std::string& pas
         (check && !Mnemonic::isValid(mnemonic))) {
         throw std::invalid_argument("Invalid mnemonic");
     }
+    if (!random_init()) {
+        throw std::runtime_error("Failed to initialize random number generator");
+    }
     updateSeedAndEntropy(check);
 }
 
@@ -93,12 +99,15 @@ HDWallet<seedSize>::HDWallet(const Data& entropy, const std::string& passphrase)
         throw std::invalid_argument("Invalid mnemonic data");
     }
     mnemonic = mnemonic_chars;
-    TW::memzero(buf, MnemonicBufLength);
+    memzero(buf, MnemonicBufLength);
+    if (!random_init()) {
+        throw std::runtime_error("Failed to initialize random number generator");
+    }
     updateSeedAndEntropy();
 }
 
-template <std::size_t seedSize>
-HDWallet<seedSize>::~HDWallet() {
+HDWallet::~HDWallet() {
+    random_release();
     std::fill(seed.begin(), seed.end(), 0);
     std::fill(mnemonic.begin(), mnemonic.end(), 0);
     std::fill(passphrase.begin(), passphrase.end(), 0);

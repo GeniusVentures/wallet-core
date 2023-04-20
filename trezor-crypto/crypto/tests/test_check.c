@@ -5281,10 +5281,10 @@ START_TEST(test_mnemonic) {
   a = vectors;
   b = vectors + 1;
   c = vectors + 2;
-  int buf_size = 308;
-  char buf[buf_size];
+#define TC_BUF_SIZE 300
+  char buf[TC_BUF_SIZE];
   while (*a && *b && *c) {
-    m = mnemonic_from_data(fromhex(*a), strlen(*a) / 2, buf, buf_size);
+    m = mnemonic_from_data(fromhex(*a), strlen(*a) / 2, buf, TC_BUF_SIZE);
     ck_assert_str_eq(m, *b);
     mnemonic_to_seed(m, "TREZOR", seed, 0);
     ck_assert_mem_eq(seed, fromhex(*c), strlen(*c) / 2);
@@ -5296,7 +5296,7 @@ START_TEST(test_mnemonic) {
     a += 3;
     b += 3;
     c += 3;
-    memzero(buf, buf_size);
+#undef TC_BUF_SIZE
   }
 }
 END_TEST
@@ -6803,7 +6803,7 @@ START_TEST(test_ed25519_keccak) {
 END_TEST
 
 START_TEST(test_ed25519_cosi) {
-  const int MAXN = 10;
+#define MAXN 10
   ed25519_secret_key keys[MAXN];
   ed25519_public_key pubkeys[MAXN];
   ed25519_secret_key nonces[MAXN];
@@ -6857,6 +6857,7 @@ START_TEST(test_ed25519_cosi) {
 
     UNMARK_SECRET_DATA(keys, sizeof(keys));
   }
+#undef MAXN 
 }
 END_TEST
 
@@ -7167,7 +7168,12 @@ static void test_bip32_ecdh(const char *curve_name, int expected_key_size,
                             const uint8_t *expected_key) {
   int res, key_size;
   HDNode alice, bob;
+#ifdef _MSC_VER
+  uint8_t *session_key1 = _alloca(expected_key_size);
+  uint8_t *session_key2 = _alloca(expected_key_size);
+#else
   uint8_t session_key1[expected_key_size], session_key2[expected_key_size];
+#endif
 
   test_bip32_ecdh_init_node(&alice, "Alice", curve_name);
   test_bip32_ecdh_init_node(&bob, "Bob", curve_name);

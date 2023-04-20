@@ -61,16 +61,34 @@ add_library(TrezorCrypto
     crypto/cardano.c
 )
 
-if (EMSCRIPTEN)
-    message(STATUS "Skip building trezor-crypto/tests")
-    set(TW_WARNING_FLAGS ${TW_WARNING_FLAGS} -Wno-bitwise-instead-of-logical)
-else ()
-    if(NOT ANDROID AND NOT IOS_PLATFORM)
-        add_subdirectory(crypto/tests)
-    endif()
+if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
+    target_compile_options(TrezorCrypto
+        PRIVATE
+            -W
+            -Wall
+            -Wextra
+            -Wimplicit-function-declaration
+            -Wredundant-decls
+            -Wstrict-prototypes
+            -Wundef
+            -Wshadow
+            -Wpointer-arith
+            -Wformat
+            -Wreturn-type
+            -Wsign-compare
+            -Wmultichar
+            -Wformat-nonliteral
+            -Winit-self
+            -Wuninitialized
+            -Wformat-security
+            -Wno-missing-braces
+            -Werror
+    )
 endif()
 
-target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} -Werror PUBLIC -Wno-deprecated-volatile)
+if(WIN32)
+    target_link_libraries(TrezorCrypto bcrypt)
+endif()
 
 target_include_directories(TrezorCrypto
     PUBLIC
@@ -80,10 +98,13 @@ target_include_directories(TrezorCrypto
         src
 )
 
-install(
-    TARGETS TrezorCrypto
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+if(NOT ANDROID AND NOT IOS_PLATFORM AND NOT (WIN32 AND NOT TW_STATIC_LIBRARY))
+    add_subdirectory(crypto/tests)
+endif()
+
+install(TARGETS TrezorCrypto
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

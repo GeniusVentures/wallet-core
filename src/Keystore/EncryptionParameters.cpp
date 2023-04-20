@@ -132,14 +132,14 @@ Data EncryptedPayload::decrypt(const Data& password) const {
     const auto encryption = params.cipherParams.mCipherEncryption;
     if (encryption == TWStoredKeyEncryptionAes128Ctr || encryption == TWStoredKeyEncryptionAes256Ctr) {
         aes_encrypt_ctx ctx;
-        [[maybe_unused]] auto result = aes_encrypt_key(derivedKey.data(), params.getKeyBytesSize(), &ctx);
+        [[maybe_unused]] auto result = aes_encrypt_key(derivedKey.data(), 16, &ctx);
         assert(result != EXIT_FAILURE);
 
         aes_ctr_decrypt(encrypted.data(), decrypted.data(), static_cast<int>(encrypted.size()), iv.data(),
                         aes_ctr_cbuf_inc, &ctx);
     } else if (encryption == TWStoredKeyEncryptionAes128Cbc) {
         aes_decrypt_ctx ctx;
-        [[maybe_unused]] auto result = aes_decrypt_key(derivedKey.data(), params.getKeyBytesSize(), &ctx);
+        [[maybe_unused]] auto result = aes_decrypt_key(derivedKey.data(), 16, &ctx);
         assert(result != EXIT_FAILURE);
 
         for (auto i = 0ul; i < encrypted.size(); i += params.getKeyBytesSize()) {
