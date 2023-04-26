@@ -18,7 +18,7 @@ $cmakePlatform = "x64"
 $cmakeToolset = "v143"
 
 if (Test-Path -Path $install -PathType Container) {
-	Remove-Item –Path $install -Recurse
+	Remove-Item -Path $install -Recurse
 }
 
 cd build
@@ -36,7 +36,7 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 $libInstall = Join-Path $install "lib\TrustWalletCore.lib"
-Remove-Item –Path $libInstall # Replaced with the shared lib afterwards
+Remove-Item -Path $libInstall # Replaced with the shared lib afterwards
 cd ..
 
 if (-not(Test-Path -Path "shared" -PathType Container)) {
@@ -59,7 +59,7 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 $cppInclude = Join-Path $install "include\WalletCore"
-Remove-Item –Path $cppInclude -Recurse # Useless from shared library
+Remove-Item -Path $cppInclude -Recurse # Useless from shared library
 cd ..
 
 cd $root

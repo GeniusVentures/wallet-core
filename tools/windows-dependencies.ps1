@@ -1,4 +1,3 @@
-
 # Downloads and builds dependencies for Windows
 # Run this PowerShell script from the repository root folder
 # > powershell .\tools\windows-dependencies.ps1
@@ -37,7 +36,7 @@ if (-not(Test-Path -Path $gtestZip -PathType Leaf)) {
     Invoke-WebRequest -Uri $gtestUrl -OutFile $gtestZip
 }
 if (Test-Path -Path googletest-release-$gtestVersion -PathType Container) {
-     Remove-Item –Path googletest-release-$gtestVersion -Recurse
+     Remove-Item -Path googletest-release-$gtestVersion -Recurse
 }
 Expand-Archive -LiteralPath $gtestZip -DestinationPath $gtestDir
 
@@ -73,7 +72,7 @@ if (-not(Test-Path -Path $checkZip -PathType Leaf)) {
     Invoke-WebRequest -Uri $checkUrl -OutFile $checkZip
 }
 if (Test-Path -Path check-$checkVersion -PathType Container) {
-     Remove-Item –Path check-$checkVersion -Recurse
+     Remove-Item -Path check-$checkVersion -Recurse
 }
 Expand-Archive -LiteralPath $checkZip -DestinationPath $checkDir
 
@@ -100,7 +99,7 @@ $jsonDir = Join-Path $prefix "include\nlohmann"
 $jsonUrl = "https://github.com/nlohmann/json/releases/download/v$jsonVersion/json.hpp"
 $jsonFile = Join-Path $jsonDir "json.hpp"
 if (Test-Path -Path $jsonFile -PathType Leaf) {
-    Remove-Item –Path $jsonFile
+    Remove-Item -Path $jsonFile
 }
 if (-not(Test-Path -Path $jsonDir -PathType Container)) {
     mkdir $jsonDir | Out-Null
@@ -112,7 +111,8 @@ $boostVersion = "1.77.0"
 $boostVersionU = $boostVersion.Replace(".", "_")
 $boostDir = Join-Path $prefix "src\boost"
 $boostZip = "boost_$boostVersionU.zip"
-$boostUrl = "https://nchc.dl.sourceforge.net/project/boost/boost/$boostVersion/$boostZip"
+$boostUrl = "https://boostorg.jfrog.io/artifactory/main/release/$boostVersion/source/$boostZip"
+$old_boostUrl = "https://nchc.dl.sourceforge.net/project/boost/boost/$boostVersion/$boostZip"
 
 # Download and extract
 if (-not(Test-Path -Path $boostDir -PathType Container)) {
@@ -123,7 +123,7 @@ if (-not(Test-Path -Path $boostZip -PathType Leaf)) {
     Invoke-WebRequest -Uri $boostUrl -OutFile $boostZip
 }
 if (Test-Path -Path boost_$boostVersionU -PathType Container) {
-     Remove-Item –Path boost_$boostVersionU -Recurse
+     Remove-Item -Path boost_$boostVersionU -Recurse
 }
 # Expand-Archive -LiteralPath $boostZip -DestinationPath $boostDir
 $boostZipPath = Join-Path $boostDir $boostZip
@@ -134,13 +134,13 @@ if (-not(Test-Path -Path $include -PathType Container)) {
 }
 $boostInclude = Join-Path $include "boost"
 if (Test-Path -Path $boostInclude -PathType Container) {
-     Remove-Item –Path $boostInclude -Recurse
+     Remove-Item -Path $boostInclude -Recurse
 }
 $boostSrcInclude = Join-Path $boostDir "boost_$boostVersionU\boost"
 move $boostSrcInclude $boostInclude
 
 # Protobuf
-$protobufVersion = "3.19.1"
+$protobufVersion = "3.20.0"
 $protobufDir = Join-Path $prefix "src\protobuf"
 $protobufZip = "protobuf-cpp-$protobufVersion.zip"
 $protobufUrl = "https://github.com/protocolbuffers/protobuf/releases/download/v$protobufVersion/$protobufZip"
@@ -154,7 +154,7 @@ if (-not(Test-Path -Path $protobufZip -PathType Leaf)) {
     Invoke-WebRequest -Uri $protobufUrl -OutFile $protobufZip
 }
 if (Test-Path -Path protobuf-$protobufVersion -PathType Container) {
-     Remove-Item –Path protobuf-$protobufVersion -Recurse
+     Remove-Item -Path protobuf-$protobufVersion -Recurse
 }
 Expand-Archive -LiteralPath $protobufZip -DestinationPath $protobufDir
 
@@ -164,7 +164,7 @@ mkdir build_msvc | Out-Null
 cd build_msvc
 $protobufCMake = Get-Content ..\cmake\CMakeLists.txt # Bugfix
 $protobufCMake = $protobufCMake.Replace("set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)",
-    "if (MSVC AND protobuf_MSVC_STATIC_RUNTIME)`r`nset(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)`r`nendif()") # Bugfix
+    "if (MSVC AND protobuf_MSVC_STATIC_RUNTIME)`r`nset(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)`r`nendif()")
 $protobufCMake | Out-File -encoding UTF8 ..\cmake\CMakeLists.txt # Bugfix
 cmake -G $cmakeGenerator -A $cmakePlatform -T $cmakeToolset "-DCMAKE_INSTALL_PREFIX=$prefix" "-DCMAKE_BUILD_TYPE=Release" "-Dprotobuf_WITH_ZLIB=OFF" "-Dprotobuf_MSVC_STATIC_RUNTIME=OFF" "-Dprotobuf_BUILD_TESTS=OFF" "-Dprotobuf_BUILD_SHARED_LIBS=OFF" ../cmake
 if ($LASTEXITCODE -ne 0) {
@@ -183,11 +183,11 @@ if ($LASTEXITCODE -ne 0) {
 $pluginSrc = Join-Path $root "protobuf-plugin"
 cd $pluginSrc
 if (Test-Path -Path build -PathType Container) {
-     Remove-Item –Path build -Recurse
+     Remove-Item -Path build -Recurse
 }
 mkdir build | Out-Null
 cd build
-cmake -G $cmakeGenerator -A $cmakePlatform -T $cmakeToolset "-DCMAKE_INSTALL_PREFIX=$prefix" "-DCMAKE_BUILD_TYPE=Release" ..
+cmake -G $cmakeGenerator -A $cmakePlatform -T $cmakeToolset -DCMAKE_INSTALL_PREFIX=$prefix -DCMAKE_BUILD_TYPE=Release ..
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
