@@ -13,6 +13,11 @@ if (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang") AND
     message(FATAL_ERROR "You should use clang or msvc compiler")
 endif ()
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+
 if ("$ENV{PREFIX}" STREQUAL "")
     set(PREFIX "${CMAKE_SOURCE_DIR}/build/local")
 else ()
