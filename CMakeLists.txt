@@ -8,9 +8,11 @@ cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 project(TrustWalletCore)
 
-if (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
-    message(FATAL_ERROR "You should use clang compiler")
+if (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang") AND
+        NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
+    message(FATAL_ERROR "You should use clang or msvc compiler")
 endif ()
+
 
 if ("$ENV{PREFIX}" STREQUAL "")
     set(PREFIX "${CMAKE_SOURCE_DIR}/build/local")
@@ -45,8 +47,13 @@ find_host_package(Boost REQUIRED)
 
 include(ExternalProject)
 
-# Dependencies
-include(cmake/Protobuf.cmake)
+if (TW_USE_EXTERNAL_PROTOC)
+    find_host_package(Protobuf REQUIRED)
+    include_directories(${Protobuf_INCLUDE_DIRS})
+else()
+    # Dependencies
+    include(cmake/Protobuf.cmake)
+endif()
 
 # Source files
 if (${ANDROID})
@@ -82,7 +89,7 @@ else ()
     target_link_libraries(TrustWalletCore PUBLIC ${WALLET_CORE_BINDGEN} ${PROJECT_NAME}_INTERFACE PRIVATE TrezorCrypto protobuf Boost::boost)
 endif ()
 
-if (TW_CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if (TW_CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|.*Clang")
     target_enable_coverage(TrustWalletCore)
 endif ()
 
@@ -100,6 +107,7 @@ target_include_directories(TrustWalletCore
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/jni/cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/build/local/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/json/include
         )
 
 if (TW_UNIT_TESTS)
