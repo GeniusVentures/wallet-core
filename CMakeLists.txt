@@ -27,7 +27,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version" FORCE)
 
-if((NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")) AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")))
+if((NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES ",*Clang")) AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")))
     message(FATAL_ERROR "You should use clang or msvc compiler")
 endif()
 >>>>>>> ebeeb927 (Add support for Visual Studio to build scripts)
@@ -75,14 +75,6 @@ if (TW_USE_EXTERNAL_PROTOC)
 else()
     # Dependencies
     include(cmake/Protobuf.cmake)
-endif()
-
-if(WIN32)
-    # Static library is required when building tools (walletconsole) that include the C++ headers
-    option(TW_STATIC_LIBRARY "Build static TrustWalletCore library" OFF)
-    if(TW_STATIC_LIBRARY)
-        add_definitions(-DTW_STATIC_LIBRARY)
-    endif()
 endif()
 
 # Source files
