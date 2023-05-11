@@ -83,13 +83,15 @@ android {
     buildToolsVersion = libs.versions.android.sdk.tools.get()
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     defaultConfig {
         minSdk = libs.versions.android.sdk.min.get().toInt()
         ndkVersion = libs.versions.android.ndk.get()
+
+        consumerProguardFiles += projectDir.resolve("consumer-rules.pro")
 
         externalNativeBuild {
             cmake {

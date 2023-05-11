@@ -2,9 +2,9 @@ name: iOS CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ dev, master ]
   pull_request:
-    branches: [ master ]
+    branches: [ dev, master ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-latest-xl
+    runs-on: [ self-hosted, macOS, ARM64, wallet-core ]
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v3
@@ -32,12 +32,6 @@ jobs:
       if: steps.internal_cache.outputs.cache-hit != 'true'
     - name: Run codegen tests
       run: tools/codegen-test
-
-    - name: Cache Rust
-      uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: |
-          rust
 
     - name: Run iOS tests
       run: |
