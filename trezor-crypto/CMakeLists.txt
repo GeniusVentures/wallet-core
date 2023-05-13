@@ -114,6 +114,8 @@ if(WIN32)
 endif()
 >>>>>>> ebeeb927 (Add support for Visual Studio to build scripts)
 
+target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} PUBLIC)
+
 target_include_directories(TrezorCrypto
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
