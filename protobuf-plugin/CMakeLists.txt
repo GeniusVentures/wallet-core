@@ -25,17 +25,13 @@ include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(protoc-gen-c-typedef c_typedef.cc ${PROTO_SRCS} ${PROTO_HDRS})
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
-    target_link_libraries(protoc-gen-c-typedef ${Protobuf_LIBRARIES} ${Protobuf_PROTOC_LIBRARIES})
-else()
-    target_link_libraries(protoc-gen-c-typedef protobuf -lprotoc -pthread)
+if (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
+    set(TW_PTHREAD_LIB "-pthread" )
 endif()
 
+target_link_libraries(protoc-gen-c-typedef ${Protobuf_LIBRARIES} ${Protobuf_PROTOC_LIBRARIES} ${TW_PTHREAD_LIB})
+
 add_executable(protoc-gen-swift-typealias swift_typealias.cc ${PROTO_SRCS} ${PROTO_HDRS})
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
-    target_link_libraries(protoc-gen-swift-typealias ${Protobuf_LIBRARIES} ${Protobuf_PROTOC_LIBRARIES} )
-else()
-    target_link_libraries(protoc-gen-swift-typealias protobuf -lprotoc -pthread)
-endif()
+target_link_libraries(protoc-gen-swift-typealias ${Protobuf_LIBRARIES} ${Protobuf_PROTOC_LIBRARIES} ${TW_PTHREAD_LIB})
 
 install(TARGETS protoc-gen-c-typedef protoc-gen-swift-typealias DESTINATION bin)

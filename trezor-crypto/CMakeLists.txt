@@ -4,26 +4,34 @@
 # terms governing use, modification, and redistribution, is contained in the
 # file LICENSE at the root of the source code distribution tree.
 
-set(TW_WARNING_FLAGS 
-    -W
-    -Wall
-    -Wextra
-    -Wimplicit-function-declaration
-    -Wredundant-decls
-    -Wstrict-prototypes
-    -Wundef
-    -Wshadow
-    -Wpointer-arith
-    -Wformat
-    -Wreturn-type
-    -Wsign-compare
-    -Wmultichar
-    -Wformat-nonliteral
-    -Winit-self
-    -Wuninitialized
-    -Wformat-security
-    -Wno-missing-braces
-)
+if (("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
+
+    set(TW_WARNING_FLAGS
+        -Wall
+        )
+else()
+    set(TW_WARNING_FLAGS
+        -W
+        -Wall
+        -Wextra
+        -Wimplicit-function-declaration
+        -Wredundant-decls
+        -Wstrict-prototypes
+        -Wundef
+        -Wshadow
+        -Wpointer-arith
+        -Wformat
+        -Wreturn-type
+        -Wsign-compare
+        -Wmultichar
+        -Wformat-nonliteral
+        -Winit-self
+        -Wuninitialized
+        -Wformat-security
+        -Wno-missing-braces
+        -Wno-deprecated-volatile
+        )
+endif()
 
 add_library(TrezorCrypto
     crypto/bignum.c crypto/ecdsa.c crypto/curves.c crypto/secp256k1.c crypto/rand.c crypto/hmac.c crypto/bip32.c crypto/bip39.c crypto/slip39.c crypto/pbkdf2.c crypto/base58.c crypto/base32.c
@@ -70,7 +78,7 @@ else ()
     endif()
 endif()
 
-target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} -Werror PUBLIC -Wno-deprecated-volatile)
+target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} PUBLIC)
 
 target_include_directories(TrezorCrypto
     PUBLIC
