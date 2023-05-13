@@ -16,7 +16,7 @@ include(GNUInstallDirs)
 
 # Configure warnings
 if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
-    set(TW_CXX_WARNINGS "-Wshorten-64-to-32")
+    set(TW_CXX_WARNINGS "-Wno-shorten-64-to-32")
 endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -52,7 +52,7 @@ target_link_directories(${PROJECT_NAME}_INTERFACE INTERFACE ${WALLET_CORE_RS_TAR
 set_project_warnings(${PROJECT_NAME}_INTERFACE)
 
 if(WIN32)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS) # Disable strcpy warnings
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DTW_STATIC_LIBRARY) # Disable strcpy warnings
 endif()
 
 add_subdirectory(trezor-crypto)
@@ -120,6 +120,7 @@ else()
         message("Configuring standalone")
         add_library(TrustWalletCore ${sources} ${PROTO_SRCS} ${PROTO_HDRS})
     endif()
+endif()
 
     target_link_libraries(TrustWalletCore PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} Boost::boost)
 endif()

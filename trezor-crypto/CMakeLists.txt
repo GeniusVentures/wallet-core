@@ -4,12 +4,8 @@
 # terms governing use, modification, and redistribution, is contained in the
 # file LICENSE at the root of the source code distribution tree.
 
-if (("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
+if (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
 
-    set(TW_WARNING_FLAGS
-        -Wall
-        )
-else()
     set(TW_WARNING_FLAGS
         -W
         -Wall

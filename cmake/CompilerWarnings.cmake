@@ -44,13 +44,6 @@ add_library(tw_optimize_settings INTERFACE)
 add_library(tw::optimize_settings ALIAS tw_optimize_settings)
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
-    target_compile_options(
-        tw_error_settings
-        INTERFACE
-        -Wall
-        -DD_CRT_SECURE_NO_WARNINGS
-    )
-
     if (TW_WARNINGS_AS_ERRORS)
         target_compile_options(
             tw_error_settings
