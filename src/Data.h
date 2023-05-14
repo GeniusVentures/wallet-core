@@ -11,6 +11,8 @@
 #include <string>
 #include <array>
 
+using namespace std;
+
 namespace TW {
 
 using byte = std::uint8_t;
