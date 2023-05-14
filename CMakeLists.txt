@@ -30,7 +30,6 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment ve
 if((NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang")) AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")))
     message(FATAL_ERROR "You should use clang or msvc compiler")
 endif()
->>>>>>> ebeeb927 (Add support for Visual Studio to build scripts)
 
 if ("$ENV{PREFIX}" STREQUAL "")
     set(PREFIX "${CMAKE_SOURCE_DIR}/build/local")
@@ -122,8 +121,7 @@ else()
     endif()
 endif()
 
-    target_link_libraries(TrustWalletCore PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} Boost::boost)
-endif()
+target_link_libraries(TrustWalletCore PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} Boost::boost)
 
 if (TW_CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|.*Clang")
     target_enable_coverage(TrustWalletCore)

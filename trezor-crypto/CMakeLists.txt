@@ -108,7 +108,6 @@ endif()
 if(WIN32)
     target_link_libraries(TrezorCrypto bcrypt)
 endif()
->>>>>>> ebeeb927 (Add support for Visual Studio to build scripts)
 
 target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} PUBLIC)
 
