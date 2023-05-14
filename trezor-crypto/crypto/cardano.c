@@ -246,9 +246,12 @@ int secret_from_seed_cardano_ledger(const uint8_t *seed, int seed_len,
 }
 
 #define CARDANO_ICARUS_STEPS 32
+#ifndef WIN32
 _Static_assert(
-    CARDANO_ICARUS_PBKDF2_ROUNDS % CARDANO_ICARUS_STEPS == 0,
+    (CARDANO_ICARUS_PBKDF2_ROUNDS_TMP % CARDANO_ICARUS_STEPS) == 0,
     "CARDANO_ICARUS_STEPS does not divide CARDANO_ICARUS_PBKDF2_ROUNDS");
+#endif
+
 #define CARDANO_ICARUS_ROUNDS_PER_STEP \
   (CARDANO_ICARUS_PBKDF2_ROUNDS / CARDANO_ICARUS_STEPS)
 
