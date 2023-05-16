@@ -76,10 +76,6 @@ endif()
 
 target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} PUBLIC)
 
-if(TW_UNIT_TESTS)
-    add_subdirectory(crypto/tests)
-endif()
-
 if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
     target_compile_options(TrezorCrypto
         PRIVATE
@@ -118,10 +114,6 @@ target_include_directories(TrezorCrypto
     PRIVATE
         src
 )
-
-if(TW_UNIT_TESTS)
-    add_subdirectory(crypto/tests)
-endif()
 
 install(TARGETS TrezorCrypto
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

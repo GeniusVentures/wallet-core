@@ -30,11 +30,17 @@ endif()
 file(GLOB_RECURSE test_sources *.cpp **/*.cpp **/*.cc)
 add_executable(tests ${test_sources})
 target_link_libraries(tests ${GTEST_MAIN_LIBRARIES} TrezorCrypto TrustWalletCore walletconsolelib ${Protobuf_LIBRARIES} Boost::boost)
-target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(tests
+    PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/build/local/include
+)
 
 if (TW_UNIT_TESTS)
-target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/tests/common)
-target_compile_options(tests PRIVATE "-Wall")
+    target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/tests/common)
+    target_compile_options(tests PRIVATE "-Wall")
+endif()
+
 if (NOT ANDROID AND TW_UNITY_BUILD)
     set_target_properties(tests PROPERTIES UNITY_BUILD ON)
 endif()
