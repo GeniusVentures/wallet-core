@@ -8,15 +8,12 @@ cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 project(TrustWalletCore)
 
-if (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang") AND
-        NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
-    message(FATAL_ERROR "You should use clang or msvc compiler")
-endif ()
+
 include(GNUInstallDirs)
 
 # Configure warnings
 if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
-    set(TW_CXX_WARNINGS "-Wno-shorten-64-to-32")
+    set(TW_CXX_WARNINGS "-Wno-shorten-64-to-32 -Wno-deprecated-volatile")
 endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,23 +22,23 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version" FORCE)
-
-if((NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang")) AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")))
-    message(FATAL_ERROR "You should use clang or msvc compiler")
-endif()
-
 if ("$ENV{PREFIX}" STREQUAL "")
     set(PREFIX "${CMAKE_SOURCE_DIR}/build/local")
 else ()
     set(PREFIX "$ENV{PREFIX}")
 endif ()
 
-include(GNUInstallDirs)
 include(cmake/StandardSettings.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/StaticAnalyzers.cmake)
 include(cmake/FindHostPackage.cmake)
+
+if((NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang")) AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")))
+    message("You should use clang or msvc compiler, got ${CMAKE_CXX_COMPILER_ID}, switching to clang...")
+    set(CMAKE_CXX_COMPILER clang++)
+    set(CMAKE_C_COMPILER clang)
+endif()
+
 
 set(WALLET_CORE_RS_TARGET_DIR ${CMAKE_SOURCE_DIR}/rust/target)
 add_library(${PROJECT_NAME}_INTERFACE INTERFACE)
@@ -64,12 +61,12 @@ if (TW_COMPILE_WASM)
     add_subdirectory(wasm)
 endif ()
 
-find_host_package(Boost REQUIRED)
+find_package(Boost CONFIG REQUIRED)
 
 include(ExternalProject)
 
 if (TW_USE_EXTERNAL_PROTOC)
-    find_host_package(Protobuf REQUIRED)
+    find_package(Protobuf CONFIG REQUIRED)
     include_directories(${Protobuf_INCLUDE_DIRS})
 else()
     # Dependencies
@@ -102,7 +99,7 @@ if (${ANDROID})
     elseif (${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86_64")
         set(WALLET_CORE_BINDGEN ${WALLET_CORE_RS_TARGET_DIR}/x86_64-linux-android/release/${WALLET_CORE_RS_LIB})
     endif ()
-    target_link_libraries(TrustWalletCore PUBLIC ${WALLET_CORE_BINDGEN} ${PROJECT_NAME}_INTERFACE PRIVATE TrezorCrypto protobuf ${log-lib} Boost::boost)
+    target_link_libraries(TrustWalletCore PUBLIC ${WALLET_CORE_BINDGEN} ${PROJECT_NAME}_INTERFACE PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} ${log-lib} Boost::boost)
 else()
     file(GLOB_RECURSE sources src/*.c src/*.cc src/*.cpp src/*.h)
     if(WIN32)
@@ -115,13 +112,14 @@ else()
             add_library(TrustWalletCore SHARED ${sources} ${headers} ${PROTO_SRCS} ${PROTO_HDRS})
             target_compile_definitions(TrustWalletCore PRIVATE TW_EXPORT_LIBRARY)
         endif()
+        target_link_libraries(TrustWalletCore PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} Boost::boost)
     else()
         message("Configuring standalone")
         add_library(TrustWalletCore ${sources} ${PROTO_SRCS} ${PROTO_HDRS})
+        target_link_libraries(TrustWalletCore PUBLIC ${WALLET_CORE_BINDGEN} ${PROJECT_NAME}_INTERFACE PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} Boost::boost)
     endif()
 endif()
 
-target_link_libraries(TrustWalletCore PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} Boost::boost)
 
 if (TW_CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|.*Clang")
     target_enable_coverage(TrustWalletCore)
