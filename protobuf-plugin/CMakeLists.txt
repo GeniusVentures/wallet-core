@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (TW_INSTALL_DEPENDENCIES AND NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
     execute_process(
-        COMMAND bash -c "cd ..;  ./tools/install-dependencies"
+        COMMAND bash -c "cd ..;  ./tools/generate-files"
     ) # install dependencies, including protobuf
 endif()
 
