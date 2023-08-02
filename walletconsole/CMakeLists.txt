@@ -14,4 +14,10 @@ if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
     target_compile_options(walletconsole PRIVATE "-Wall")
 endif()
 
+set_target_properties(walletconsole
+    PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+)
+
 INSTALL(TARGETS walletconsole DESTINATION ${CMAKE_INSTALL_BINDIR})

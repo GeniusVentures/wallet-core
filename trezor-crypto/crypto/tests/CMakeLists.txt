@@ -17,8 +17,7 @@ endif()
 
 # Test executable
 add_executable(TrezorCryptoTests test_check.c)
-target_link_libraries(TrezorCryptoTests TrezorCrypto check)
-target_link_directories(TrezorCryptoTests PRIVATE ${PREFIX}/lib)
-target_include_directories(TrezorCryptoTests PRIVATE ${CMAKE_SOURCE_DIR}/src ${PREFIX}/include)
+target_link_libraries(TrezorCryptoTests TrezorCrypto ${CHECK_LIBRARIES})
+target_include_directories(TrezorCryptoTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 add_test(NAME test_check COMMAND TrezorCryptoTests)

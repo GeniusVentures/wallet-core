@@ -123,7 +123,7 @@ if (-not(Test-Path -Path $boostZip -PathType Leaf)) {
     Invoke-WebRequest -Uri $boostUrl -OutFile $boostZip
 }
 if (Test-Path -Path boost_$boostVersionU -PathType Container) {
-     Remove-Item -Path boost_$boostVersionU -Recurse
+     Remove-Item –Path boost_$boostVersionU -Recurse
 }
 # Expand-Archive -LiteralPath $boostZip -DestinationPath $boostDir
 $boostZipPath = Join-Path $boostDir $boostZip

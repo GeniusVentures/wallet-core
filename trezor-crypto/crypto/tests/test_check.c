@@ -5281,10 +5281,10 @@ START_TEST(test_mnemonic) {
   a = vectors;
   b = vectors + 1;
   c = vectors + 2;
-  int buf_size = 308;
-  char buf[buf_size];
+#define TC_BUF_SIZE 300
+  char buf[TC_BUF_SIZE];
   while (*a && *b && *c) {
-    m = mnemonic_from_data(fromhex(*a), strlen(*a) / 2, buf, buf_size);
+    m = mnemonic_from_data(fromhex(*a), strlen(*a) / 2, buf, TC_BUF_SIZE);
     ck_assert_str_eq(m, *b);
     mnemonic_to_seed(m, "TREZOR", seed, 0);
     ck_assert_mem_eq(seed, fromhex(*c), strlen(*c) / 2);
@@ -5296,7 +5296,7 @@ START_TEST(test_mnemonic) {
     a += 3;
     b += 3;
     c += 3;
-    memzero(buf, buf_size);
+#undef TC_BUF_SIZE
   }
 }
 END_TEST

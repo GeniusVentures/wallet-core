@@ -106,7 +106,6 @@ if(WIN32)
 endif()
 
 target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} PUBLIC)
-
 target_include_directories(TrezorCrypto
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -114,6 +113,10 @@ target_include_directories(TrezorCrypto
     PRIVATE
         src
 )
+
+if(NOT ANDROID AND NOT IOS_PLATFORM AND NOT (WIN32 AND NOT TW_STATIC_LIBRARY))
+    add_subdirectory(crypto/tests)
+endif()
 
 install(TARGETS TrezorCrypto
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

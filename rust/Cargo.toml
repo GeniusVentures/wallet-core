@@ -2,9 +2,21 @@
 members = [
     "tw_encoding",
     "tw_hash",
+    "tw_keypair",
     "tw_memory",
+    "tw_misc",
     "tw_move_parser",
     "tw_proto",
-    "tw_starknet",
     "wallet_core_rs",
 ]
+
+[profile.wasm-test]
+inherits = "release"
+# Fixes an incredibly slow compilation of `curve25519-dalek` package.
+opt-level = 1
+debug = true
+debug-assertions = true
+overflow-checks = true
+
+[profile.release.package.curve25519-dalek]
+opt-level = 2

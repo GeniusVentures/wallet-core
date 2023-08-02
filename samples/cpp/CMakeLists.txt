@@ -30,7 +30,7 @@ set (CMAKE_C_STANDARD_REQUIRED ON)
 # ${WALLET_CORE}/src -- internal TrustWalletCore files, for signer protobuf messages
 # ${WALLET_CORE}/build/local/include) -- for protobuf includes
 include_directories (${CMAKE_SOURCE_DIR} ${WALLET_CORE}/include ${WALLET_CORE}/src ${WALLET_CORE}/build/local/include)
-link_directories (${WALLET_CORE}/build ${WALLET_CORE}/build/trezor-crypto ${WALLET_CORE}/build/local/lib ${WALLET_CORE}/rust/target/release)
+link_directories (${WALLET_CORE}/build/install/lib ${WALLET_CORE}/build ${WALLET_CORE}/build/trezor-crypto ${WALLET_CORE}/build/local/lib)
 
 find_library(WALLET_CORE_LIB_RELEASE TrustWalletCore PATH ${WALLET_CORE}/build ${WALLET_CORE}/build/install/lib)
 find_library(WALLET_CORE_LIB_DEBUG TrustWalletCored PATH ${WALLET_CORE}/build ${WALLET_CORE}/build/install/lib)
