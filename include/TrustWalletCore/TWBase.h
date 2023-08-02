@@ -17,6 +17,8 @@
 #ifdef _WIN32
 #ifdef TW_STATIC_LIBRARY
 #define TW_EXTERN
+#define TW_VISIBILITY_DEFAULT
+#define _Nonnull
 #else
 #ifdef TW_EXPORT_LIBRARY
 #define TW_EXTERN __declspec(dllexport)
@@ -26,6 +28,8 @@
 #endif
 #else
 #define TW_EXTERN extern
+// Marker for default visibility
+#define TW_VISIBILITY_DEFAULT __attribute__((visibility("default")))
 #endif
 
 // Marker for exported classes

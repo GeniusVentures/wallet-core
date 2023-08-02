@@ -43,34 +43,46 @@ add_library(tw::defaults_features ALIAS tw_defaults_features)
 add_library(tw_optimize_settings INTERFACE)
 add_library(tw::optimize_settings ALIAS tw_optimize_settings)
 
-target_compile_options(
-        tw_error_settings
-        INTERFACE
-        -Wall
-        -Wextra # reasonable and standard
-        -Wfatal-errors # short error report
-        -Wshadow # warn the user if a variable declaration shadows one from a
-        -Wshorten-64-to-32
-        -Wno-nullability-completeness
-        # parent context
-        -Wnon-virtual-dtor # warn the user if a class with virtual functions has a
-        # non-virtual destructor. This helps catch hard to track down memory errors
-        -Wcast-align     # warn for potential performance problem casts
-        #-Wunused         # warn on anything being unused
-        -Woverloaded-virtual # warn if you overload (not override) a virtual
-        # function
-        -Wnull-dereference # warn if a null dereference is detected
-        -Wdouble-promotion # warn if float is implicit promoted to double
-        -Wformat=2 # warn on security issues around functions that format output
-)
-
-if (TW_WARNINGS_AS_ERRORS)
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+    if (TW_WARNINGS_AS_ERRORS)
+        target_compile_options(
+            tw_error_settings
+            INTERFACE
+            -Wx
+        )
+    endif ()
+else()
     target_compile_options(
             tw_error_settings
             INTERFACE
-            -Werror
+            -Wall
+            -Wextra # reasonable and standard
+            -Wfatal-errors # short error report
+            -Wshadow # warn the user if a variable declaration shadows one from a
+            -Wno-shorten-64-to-32
+            -Wno-unused-parameter
+            -Wno-nullability-completeness
+            # parent context
+            -Wnon-virtual-dtor # warn the user if a class with virtual functions has a
+            # non-virtual destructor. This helps catch hard to track down memory errors
+            -Wcast-align     # warn for potential performance problem casts
+            #-Wunused         # warn on anything being unused
+            -Woverloaded-virtual # warn if you overload (not override) a virtual
+            # function
+            -Wnull-dereference # warn if a null dereference is detected
+            -Wdouble-promotion # warn if float is implicit promoted to double
+            -Wformat=2 # warn on security issues around functions that format output
     )
-endif ()
+
+    if (TW_WARNINGS_AS_ERRORS)
+        target_compile_options(
+                tw_error_settings
+                INTERFACE
+                -Werror
+        )
+    endif()
+
+endif()
 
 target_compile_features(tw_defaults_features INTERFACE cxx_std_20)
 
@@ -87,4 +99,8 @@ function(set_project_warnings project_name)
     if (NOT TARGET ${project_name})
         message(AUTHOR_WARNING "${project_name} is not a target, thus no compiler warning were added.")
     endif ()
+
 endfunction()
+
+
+

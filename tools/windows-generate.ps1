@@ -22,13 +22,13 @@ protoc.exe --version
 
 # Clean
 if (Test-Path -Path "swift\Sources\Generated" -PathType Container) {
-	Remove-Item –Path "swift\Sources\Generated" -Recurse
+	Remove-Item -Path "swift\Sources\Generated" -Recurse
 }
 if (Test-Path -Path "jni\java\wallet\core\jni" -PathType Container) {
-	Remove-Item –Path "jni\java\wallet\core\jni" -Recurse
+	Remove-Item -Path "jni\java\wallet\core\jni" -Recurse
 }
 if (Test-Path -Path "jni\cpp\generated" -PathType Container) {
-	Remove-Item –Path "jni\cpp\generated" -Recurse
+	Remove-Item -Path "jni\cpp\generated" -Recurse
 }
 
 mkdir swift\Sources\Generated\Protobuf | Out-Null
