@@ -7,6 +7,9 @@ TARGET_XCFRAMEWORK_NAME=../swift/WalletCoreRs.xcframework
 BUILD_FOLDER=../rust/target
 CRATE="wallet-core-rs"
 HEADER_NAME="WalletCoreRSBindgen.h"
+TARGET_ARCH="$1"
+BUILD_LOCATION="$2"
+
 
 create_xc_framework() {
   rm -rf $TARGET_XCFRAMEWORK_NAME
@@ -17,31 +20,56 @@ create_xc_framework() {
 
 cd rust
 
-if [[ "$1" != "android" ]]; then
-  echo "Generating Native targets"
-  cargo build --release
-  cargo build --target wasm32-unknown-emscripten --release --verbose
-fi
-if [[ `uname` == "Darwin" ]]; then
-  echo "Generating Android targets"
-  cargo build --target aarch64-linux-android --target armv7-linux-androideabi --target x86_64-linux-android --target i686-linux-android --release
-  if [[ "$1" != "android" ]]; then
-    echo "Generating iOS targets"
-    cargo build --target aarch64-apple-ios --target aarch64-apple-ios-sim --target x86_64-apple-ios --target aarch64-apple-darwin --target x86_64-apple-darwin --release &
-    cargo +nightly build -Z build-std --target aarch64-apple-ios-macabi --target x86_64-apple-ios-macabi --release &
-    wait
-    lipo $BUILD_FOLDER/x86_64-apple-ios/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-ios-sim/release/$TARGET_NAME -create -output $BUILD_FOLDER/$TARGET_NAME
-    mkdir -p $BUILD_FOLDER/darwin_universal
-    lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
-    mkdir -p $BUILD_FOLDER/catalyst
-    lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
 
-    create_xc_framework
-  fi
+if [[ "$TARGET_ARCH" == "android" ]]; then
+    echo "Generating Android targets"
+    cargo build --target aarch64-linux-android --target armv7-linux-androideabi --target x86_64-linux-android --target i686-linux-android --release
+elif [[ "$TARGET_ARCH" == "ios" ]]; then
+    if [ `uname` == "Darwin" ]; then
+        echo "Generating iOS targets"
+        cargo build --target aarch64-apple-ios --target aarch64-apple-ios-sim --target x86_64-apple-ios --target aarch64-apple-darwin --target x86_64-apple-darwin --release &
+        cargo +nightly build -Z build-std --target aarch64-apple-ios-macabi --target x86_64-apple-ios-macabi --release &
+        wait
+        lipo $BUILD_FOLDER/x86_64-apple-ios/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-ios-sim/release/$TARGET_NAME -create -output $BUILD_FOLDER/$TARGET_NAME
+        mkdir -p $BUILD_FOLDER/darwin_universal
+        lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
+        mkdir -p $BUILD_FOLDER/catalyst
+        lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
+    
+        create_xc_framework
+    fi
+else
+    # TODO - See how to fit single arch from IOS
+    if [[ "$TARGET_ARCH" == "arm64-v8a" ]]; then 
+        cargo build --target aarch64-linux-android --release
+    elif [[ "$TARGET_ARCH" == "x86" ]]; then 
+        cargo build --target i686-linux-android --release
+    elif [[ "$TARGET_ARCH" == "armeabi-v7a" ]]; then 
+        cargo build --target armv7-linux-androideabi --release
+    elif [[ "$TARGET_ARCH" == "x86_64" ]]; then 
+        cargo build --target x86_64-linux-android --release
+    elif [[ "$TARGET_ARCH" == "x86_64" ]]; then 
+        cargo build --target x86_64-linux-android --release
+    else
+	    # TODO - This was called if not "android" before, not sure if correct then or now 
+        echo "Generating Native targets"
+        cargo build --release
+        cargo build --target wasm32-unknown-emscripten --release --verbose
+    fi
+
 fi
+
+
 cbindgen --crate $CRATE --output ../src/rust/bindgen/$HEADER_NAME
 cd -
-[[ -e rust/target/release/${TARGET_NAME} ]] && cp rust/target/release/${TARGET_NAME} build/local/lib/
+
+# TODO - Is this necessary? CMake can just use the output directly. Only reason is to put binaries in the build directory
+#[[ -e rust/target/release/${TARGET_NAME} ]] && cp rust/target/release/${TARGET_NAME} $2/lib/
+#[[ -e rust/target/i686-linux-android/release/${TARGET_NAME} ]] && cp rust/target/i686-linux-android/release/${TARGET_NAME} $2/lib/
+#[[ -e rust/target/x86_64-linux-android/release/${TARGET_NAME} ]] && cp rust/target/x86_64-linux-android/release/${TARGET_NAME} $2/lib/
+#[[ -e rust/target/wasm32-unknown-emscripten/release/${TARGET_NAME} ]] && cp rust/target/wasm32-unknown-emscripten/release/${TARGET_NAME} $2/lib/
+#[[ -e rust/target/armv7-linux-androideabi/release/${TARGET_NAME} ]] && cp rust/target/armv7-linux-androideabi/release/${TARGET_NAME} $2/lib/
+#[[ -e rust/target/aarch64-linux-android/release/${TARGET_NAME} ]] && cp rust/target/aarch64-linux-android/release/${TARGET_NAME} $2/lib/
 
 if [[ `uname` == "Darwin" ]] && [[ "$1" != "android" ]]; then
 cd rust
