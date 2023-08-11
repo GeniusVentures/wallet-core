@@ -105,8 +105,8 @@ HDWallet<seedSize>::HDWallet(const Data& entropy, const std::string& passphrase)
     }
     updateSeedAndEntropy();
 }
-
-HDWallet::~HDWallet() {
+template <std::size_t seedSize>
+HDWallet<seedSize>::~HDWallet() {
     random_release();
     std::fill(seed.begin(), seed.end(), 0);
     std::fill(mnemonic.begin(), mnemonic.end(), 0);
