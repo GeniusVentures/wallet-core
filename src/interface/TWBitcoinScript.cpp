@@ -121,37 +121,37 @@ TWData *TWBitcoinScriptEncode(const struct TWBitcoinScript *script) {
 struct TWBitcoinScript *TWBitcoinScriptBuildPayToPublicKey(TWData *pubkey) {
     auto* v = reinterpret_cast<const std::vector<uint8_t>*>(pubkey);
     auto script = TW::Bitcoin::Script::buildPayToPublicKey(*v);
-    return new TWBitcoinScript{ .impl = script };
+    return new TWBitcoinScript{ script };
 }
 
 struct TWBitcoinScript *TWBitcoinScriptBuildPayToPublicKeyHash(TWData *hash) {
     auto* v = reinterpret_cast<const std::vector<uint8_t>*>(hash);
     auto script = TW::Bitcoin::Script::buildPayToPublicKeyHash(*v);
-    return new TWBitcoinScript{ .impl = script };
+    return new TWBitcoinScript{ script };
 }
 
 struct TWBitcoinScript *TWBitcoinScriptBuildPayToScriptHash(TWData *scriptHash) {
     auto* v = reinterpret_cast<const std::vector<uint8_t>*>(scriptHash);
     auto script = TW::Bitcoin::Script::buildPayToScriptHash(*v);
-    return new TWBitcoinScript{ .impl = script };
+    return new TWBitcoinScript{ script };
 }
 
 struct TWBitcoinScript *TWBitcoinScriptBuildPayToWitnessPubkeyHash(TWData *hash) {
     auto* v = reinterpret_cast<const std::vector<uint8_t>*>(hash);
     auto script = TW::Bitcoin::Script::buildPayToWitnessPublicKeyHash(*v);
-    return new TWBitcoinScript{ .impl = script };
+    return new TWBitcoinScript{ script };
 }
 
 struct TWBitcoinScript *TWBitcoinScriptBuildPayToWitnessScriptHash(TWData *scriptHash) {
     auto* v = reinterpret_cast<const std::vector<uint8_t>*>(scriptHash);
     auto script = TW::Bitcoin::Script::buildPayToWitnessScriptHash(*v);
-    return new TWBitcoinScript{ .impl = script };
+    return new TWBitcoinScript{ script };
 }
 
 struct TWBitcoinScript *_Nonnull TWBitcoinScriptLockScriptForAddress(TWString *_Nonnull address, enum TWCoinType coin) {
     auto* s = reinterpret_cast<const std::string*>(address);
     auto script = TW::Bitcoin::Script::lockScriptForAddress(*s, coin);
-    return new TWBitcoinScript{ .impl = script };
+    return new TWBitcoinScript{ script };
 }
 
 uint32_t TWBitcoinScriptHashTypeForCoin(enum TWCoinType coinType) {
