@@ -7,8 +7,9 @@ TARGET_XCFRAMEWORK_NAME=../swift/WalletCoreRs.xcframework
 BUILD_FOLDER=../rust/target
 CRATE="wallet-core-rs"
 HEADER_NAME="WalletCoreRSBindgen.h"
-TARGET_ARCH="$1"
-BUILD_LOCATION="$2"
+TARGET_OS="$1"
+ARCH_ABI="$2"
+FORCE="$3"
 
 
 create_xc_framework() {
@@ -17,50 +18,57 @@ create_xc_framework() {
   mkdir -p $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
   cp $BUILD_FOLDER/catalyst/$TARGET_NAME $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
 }
-
 cd rust
 
+declare -A TARGET_TABLE
 
-if [[ "$TARGET_ARCH" == "android" ]]; then
-    echo "Generating Android targets"
-    cargo build --target aarch64-linux-android --target armv7-linux-androideabi --target x86_64-linux-android --target i686-linux-android --release
-elif [[ "$TARGET_ARCH" == "ios" ]]; then
-    if [ `uname` == "Darwin" ]; then
-        echo "Generating iOS targets"
-        cargo build --target aarch64-apple-ios --target aarch64-apple-ios-sim --target x86_64-apple-ios --target aarch64-apple-darwin --target x86_64-apple-darwin --release &
-        cargo +nightly build -Z build-std --target aarch64-apple-ios-macabi --target x86_64-apple-ios-macabi --release &
-        wait
-        lipo $BUILD_FOLDER/x86_64-apple-ios/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-ios-sim/release/$TARGET_NAME -create -output $BUILD_FOLDER/$TARGET_NAME
-        mkdir -p $BUILD_FOLDER/darwin_universal
-        lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
-        mkdir -p $BUILD_FOLDER/catalyst
-        lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
-    
-        create_xc_framework
-    fi
+TARGET_TABLE["android-arm64-v8a"]="aarch64-linux-android"
+TARGET_TABLE["android-armeabi-v7a"]="armv7-linux-androideabi"
+TARGET_TABLE["android-x86_64"]="x86_64-linux-android"
+TARGET_TABLE["android-x86"]="i686-linux-android"
+
+
+if [[ "$TARGET_OS" == "android" ]]; then
+	# TODO - Check a way to do this to all targets
+	for KEY in "${!TARGET_TABLE[@]}"; do
+		if [ -z $ARCH_ABI ] || [ "$KEY" == "$TARGET_OS-$ARCH_ABI" ]; then
+			if ! [ -z $FORCE ] || ! [ -f $BUILD_FOLDER/${TARGET_TABLE[$KEY]}/release/$TARGET_NAME ]; then
+				echo "Generating build for ${TARGET_TABLE[$KEY]}"
+				cargo build --target ${TARGET_TABLE[$KEY]} --release
+			fi
+		fi
+	done
+elif [[ "$TARGET_OS" == "ios" ]]; then
+	if [ `uname` == "Darwin" ]; then
+		if ! [ -z $FORCE ] || ! [ -f $BUILD_FOLDER/$TARGET_NAME ]; then
+			echo "Generating iOS targets"
+			cargo build --target aarch64-apple-ios --target aarch64-apple-ios-sim --target x86_64-apple-ios --target aarch64-apple-darwin --target x86_64-apple-darwin --release &
+			cargo +nightly build -Z build-std --target aarch64-apple-ios-macabi --target x86_64-apple-ios-macabi --release &
+			wait
+			lipo $BUILD_FOLDER/x86_64-apple-ios/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-ios-sim/release/$TARGET_NAME -create -output $BUILD_FOLDER/$TARGET_NAME
+			mkdir -p $BUILD_FOLDER/darwin_universal
+			lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
+			mkdir -p $BUILD_FOLDER/catalyst
+			lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
+		
+			create_xc_framework
+		fi
+	else
+		echo "Error, Trying to build iOS on a Linux maybe?"
+		exit 1
+	fi
 else
-    # TODO - See how to fit single arch from IOS
-    if [[ "$TARGET_ARCH" == "arm64-v8a" ]]; then 
-        cargo build --target aarch64-linux-android --release
-    elif [[ "$TARGET_ARCH" == "x86" ]]; then 
-        cargo build --target i686-linux-android --release
-    elif [[ "$TARGET_ARCH" == "armeabi-v7a" ]]; then 
-        cargo build --target armv7-linux-androideabi --release
-    elif [[ "$TARGET_ARCH" == "x86_64" ]]; then 
-        cargo build --target x86_64-linux-android --release
-    elif [[ "$TARGET_ARCH" == "x86_64" ]]; then 
-        cargo build --target x86_64-linux-android --release
-    else
-	    # TODO - This was called if not "android" before, not sure if correct then or now 
-        echo "Generating Native targets"
-        cargo build --release
-        cargo build --target wasm32-unknown-emscripten --release --verbose
-    fi
-
+	# TODO - This was called if not "android" before, so it was called when ios and whatnot?
+	if ! [ -z $FORCE ] || ! [ -f $BUILD_FOLDER/release/$TARGET_NAME ]; then
+		echo "Generating Native targets"
+		cargo build --release
+		cargo build --target wasm32-unknown-emscripten --release --verbose
+	fi
 fi
 
-
-cbindgen --crate $CRATE --output ../src/rust/bindgen/$HEADER_NAME
+if ! [ -z $FORCE ] || ! [ -f ../src/rust/bindgen/$HEADER_NAME ]; then
+	cbindgen --crate $CRATE --output ../src/rust/bindgen/$HEADER_NAME
+fi
 cd -
 
 # TODO - Is this necessary? CMake can just use the output directly. Only reason is to put binaries in the build directory
@@ -71,7 +79,8 @@ cd -
 #[[ -e rust/target/armv7-linux-androideabi/release/${TARGET_NAME} ]] && cp rust/target/armv7-linux-androideabi/release/${TARGET_NAME} $2/lib/
 #[[ -e rust/target/aarch64-linux-android/release/${TARGET_NAME} ]] && cp rust/target/aarch64-linux-android/release/${TARGET_NAME} $2/lib/
 
-if [[ `uname` == "Darwin" ]] && [[ "$1" != "android" ]]; then
+if [[ `uname` == "Darwin" ]] && [[ "$TARGET_OS" == "ios" ]]; then
+if ! [ -z $FORCE ] || ! [ -f $TARGET_XCFRAMEWORK_NAME/Info.plist ]; then
 cd rust
 cat > $TARGET_XCFRAMEWORK_NAME/Info.plist << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -144,4 +153,5 @@ cat > $TARGET_XCFRAMEWORK_NAME/Info.plist << EOF
 </plist>
 EOF
 cd -
+fi
 fi
