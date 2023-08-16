@@ -122,6 +122,10 @@ if (TW_CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|.*Clang")
     target_enable_coverage(TrustWalletCore)
 endif ()
 
+if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
+    target_compile_options(TrustWalletCore PRIVATE "-Wall")
+endif()
+
 if (TW_CLANG_ASAN)
     target_enable_asan(TrustWalletCore)
 endif ()
