@@ -133,7 +133,7 @@ if ! [ -z $FORCE ] || ! [ -f "src/Hedera/Protobuf/transaction_contents.pb.h" ]; 
     "$PROTOC" -I=$PREFIX/include -I=tests/chains/Cosmos/Protobuf --cpp_out=tests/chains/Cosmos/Protobuf tests/chains/Cosmos/Protobuf/*.proto
 fi
 
-if ! [ -z $FORCE ] || ! [ -f "include/TrustWalletCore/TWHRP.h" ]; then
+if ! [ -z $FORCE ] || ! [ -f "include/TrustWalletCore/TWOntologyProto.h" ]; then
     if [ -z $PLUGIN_DIR ]; then
         PLUGIN_DIR="$PREFIX/bin"
     fi
