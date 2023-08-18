@@ -60,6 +60,7 @@ fi
 
 echo "PREFIX: $PREFIX"
 echo "ARCH: $ARCH"
+echo "TARGET_OS: $TARGET_OS"
 echo "WALLET_PRJ_DIR: $WALLET_PRJ_DIR"
 echo "PLUGIN_DIR: $PLUGIN_DIR"
 echo "FORCE: $FORCE"
