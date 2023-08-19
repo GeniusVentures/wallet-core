@@ -16,12 +16,11 @@ if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
     set(TW_CXX_WARNINGS "-Wno-shorten-64-to-32 -Wno-deprecated-volatile")
 endif()
 set(CMAKE_CXX_STANDARD 20)
-
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version" FORCE)
-
-if((NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")) AND (NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")))
-    message(FATAL_ERROR "You should use clang or msvc compiler")
-endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TW_CXX_WARNINGS}")
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 if ("$ENV{PREFIX}" STREQUAL "")
     set(PREFIX "${CMAKE_SOURCE_DIR}/build/local")
@@ -125,6 +124,7 @@ endif()
 if (TW_CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|.*Clang")
     target_enable_coverage(TrustWalletCore)
 endif ()
+
 if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
     target_compile_options(TrustWalletCore PRIVATE "-Wall")
 endif()
@@ -146,7 +146,7 @@ target_include_directories(TrustWalletCore
         ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/json/include
         )
 
-if(NOT ANDROID AND NOT IOS_PLATFORM AND NOT (WIN32 AND NOT TW_STATIC_LIBRARY))
+if (TW_UNIT_TESTS)
     add_subdirectory(tests)
 endif ()
 
