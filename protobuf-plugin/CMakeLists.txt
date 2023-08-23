@@ -33,13 +33,16 @@ if (TW_STATIC_LIBRARY)
     set(TW_STATIC_PRIVATE PRIVATE)
 endif()
 
-set(_protobuf_libs protobuf protobuf-lite)
-set(_protoc_libs protoc)
+find_library(_PROTOC_LIBRARY HINTS ${Protobuf_PROTOC_LIBRARIES} NAMES protoc libprotoc)
+find_library(_PROTOBUF_LIBRARY HINTS ${Protobuf_LIBRARIES} NAMES protobuf libprotobuf)
+find_library(_PROTOBUF_LITE_LIBRARY HINTS ${Protobuf_LIBRARIES} NAMES protobuf-lite libprotobuf-lite)
+set(_protobuf_lib_set ${_PROTOBUF_LIBRARY} ${_PROTOBUF_LITE_LIBRARY})
+set(_protoc_lib_set ${_PROTOC_LIBRARY})
 
 add_executable(protoc-gen-c-typedef c_typedef.cc ${PROTO_SRCS} ${PROTO_HDRS})
-target_link_libraries(protoc-gen-c-typedef ${TW_STATIC_PRIVATE} ${_protoc_libs} ${_protobuf_libs} ${TW_PTHREAD_LIB})
+target_link_libraries(protoc-gen-c-typedef ${TW_STATIC_PRIVATE} ${_protoc_lib_set} ${_protobuf_lib_set} ${TW_PTHREAD_LIB})
 
 add_executable(protoc-gen-swift-typealias swift_typealias.cc ${PROTO_SRCS} ${PROTO_HDRS})
-target_link_libraries(protoc-gen-swift-typealias ${_protoc_libs} ${_protobuf_libs})
+target_link_libraries(protoc-gen-swift-typealias ${_protoc_lib_set} ${_protobuf_lib_set})
 
 install(TARGETS protoc-gen-c-typedef protoc-gen-swift-typealias DESTINATION bin)
