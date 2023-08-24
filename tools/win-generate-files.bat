@@ -10,35 +10,32 @@ set "ARCH="
 set "TARGET_OS="
 
 :: Parse command line arguments
+
+set "PARAM_ST="
 :parse_args
 if "%~1"=="" goto done_args
 if "%~1"=="--protobuf-dir" (
-    set "PREFIX=%~2"
-    shift
+    set "PARAM_ST=%~1"
     shift
     goto parse_args
 )
 if "%~1"=="--prj-dir" (
-    set "WALLET_PRJ_DIR=%~2"
-    shift
+    set "PARAM_ST=%~1"
     shift
     goto parse_args
 )
 if "%~1"=="--plugin-dir" (
-    set "PLUGIN_DIR=%~2"
-    shift
+    set "PARAM_ST=%~1"
     shift
     goto parse_args
 )
 if "%~1"=="--arch-abi" (
-    set "ARCH=%~2"
-    shift
+    set "PARAM_ST=%~1"
     shift
     goto parse_args
 )
 if "%~1"=="--target-os" (
-    set "TARGET_OS=%~2"
-    shift
+    set "PARAM_ST=%~1"
     shift
     goto parse_args
 )
@@ -47,9 +44,45 @@ if "%~1"=="-f" (
     shift
     goto parse_args
 )
+if "!PARAM_ST!"=="--protobuf-dir" (
+    set "PREFIX=%~1"
+    shift
+    goto parse_args
+)
+if "!PARAM_ST!"=="--prj-dir" (
+    set "WALLET_PRJ_DIR=%~1"
+    shift
+    goto parse_args
+)
+if "!PARAM_ST!"=="--plugin-dir" (
+    set "PLUGIN_DIR=%~1"
+    shift
+    goto parse_args
+)
+if "!PARAM_ST!"=="--arch-abi" (
+    set "ARCH=%~1"
+    shift
+    goto parse_args
+)
+if "!PARAM_ST!"=="--target-os" (
+    set "TARGET_OS=%~1"
+    shift
+    goto parse_args
+)
 goto done_args
 
+:fix_paths
+set "inputstr=!%~1!"
+set "outputstr=%inputstr:/=\%"
+set "%~1=!outputstr!"
+exit /b
+
 :done_args
+
+call :fix_paths PREFIX
+call :fix_paths WALLET_PRJ_DIR
+call :fix_paths PLUGIN_DIR
+call :fix_paths WALLET_PRJ_DIR
 
 if "%PREFIX%"=="" (
     rem PREFIX not set
@@ -76,6 +109,25 @@ if "%PREFIX%"=="" (
     )
 )
 
+echo PREFIX: !PREFIX!
+echo ARCH: !ARCH!
+echo TARGET_OS: !TARGET_OS!
+echo WALLET_PRJ_DIR: !WALLET_PRJ_DIR!
+echo PLUGIN_DIR: !PLUGIN_DIR!
+echo FORCE: !FORCE!
+
+set "PATH=!PREFIX!\bin;!PATH!"
+
+:: TODO - Check if needed.
+::set "LD_LIBRARY_PATH"=!PREFIX!\lib;!LD_LIBRARY_PATH!"
+::set "DYLD_LIBRARY_PATH"=!PREFIX!\lib;!DYLD_LIBRARY_PATH!"
+
+set "PROTOC=!PREFIX!\bin\protoc"
+echo PROTOC: !PROTOC!
+
+!PROTOC! --version
+
+
 :: Change directory to WALLET_PRJ_DIR if it is not empty
 if not "!WALLET_PRJ_DIR!"=="" (
     cd "!WALLET_PRJ_DIR!"
@@ -98,11 +150,14 @@ rmdir /s /q "jni\android\generated"
 mkdir "swift\Sources\Generated\Protobuf"
 mkdir "swift\Sources\Generated\Enums"
 
+
+
 :: Generate coins info from registry.json
-codegen\bin\coins
+ruby.exe codegen\bin\coins
 
 :: Generate interface code, Swift bindings excluded.
-codegen\bin\codegen
+ruby.exe codegen\bin\codegen
+
 
 :: Generate Swift bindings with codegen-v2
 cd codegen-v2
@@ -111,13 +166,13 @@ copy /Y "bindings\*" "..\swift\Sources\Generated\"
 copy /Y "src\codegen\swift\templates\WalletCore.h" "..\swift\Sources\Generated\"
 cd ..
 
-:: Convert doxygen comments to appropriate format
-tools\doxygen_convert_comments
+:: Convert doxygen comments to appropriate format TODO - Remove or port this
+::tools\doxygen_convert_comments 
 
 :bypass_coins
 
 :: Generate Rust bindgen
-tools\rust-bindgen %TARGET_OS% %ARCH%
+call tools\win-rust-bindgen.bat %TARGET_OS% %ARCH% %FORCE%
 
 :: Check if protoc-gen-swift is available and no command line arguments are provided
 if exist "%PREFIX%\bin\protoc-gen-swift" (
@@ -147,11 +202,10 @@ if "!FORCE!"=="" (
     )
 )
 
-:echo Generating Java code
+echo Generating Java code
 "%PROTOC%" -I="%PREFIX%\include" -I=src/proto --cpp_out=src/proto --java_out=lite:jni/proto src/proto\*.proto
 
 :bypass_swift_java
-
 
 :: Check if FORCE is set or src\Hedera\Protobuf\transaction_contents.pb.h does not exist
 if "!FORCE!"=="" (
@@ -169,7 +223,6 @@ echo Generating internal protobuf files
 "%PROTOC%" -I="%PREFIX%\include" -I=src\Hedera\Protobuf --cpp_out=src\Hedera\Protobuf src\Hedera\Protobuf\*.proto
 "%PROTOC%" -I="%PREFIX%\include" -I=tests\chains\Cosmos\Protobuf --cpp_out=tests\chains\Cosmos\Protobuf tests\chains\Cosmos\Protobuf\*.proto
 
-
 :bypass_internal_protobuf
 
 :: Check if FORCE is set or src\Hedera\Protobuf\transaction_contents.pb.h does not exist
@@ -185,15 +238,9 @@ if "!PLUGIN_DIR!"=="" (
 
 echo Generating proto interface files
 
+set "path=%path%;%PLUGIN_DIR%"
 :: Generate Proto interface file
-"%PROTOC%" -I="%PREFIX%\include" -I=src\proto --plugin="%PLUGIN_DIR%\protoc-gen-c-typedef" --c-typedef_out include\TrustWalletCore src\proto\*.proto
-"%PROTOC%" -I="%PREFIX%\include" -I=src\proto --plugin="%PLUGIN_DIR%\protoc-gen-swift-typealias" --swift-typealias_out swift\Sources\Generated\Protobuf src\proto\*.proto
-
-
-
+"%PROTOC%" -I="%PREFIX%\include" -I=src\proto --c-typedef.exe_out include\TrustWalletCore src\proto\*.proto
+"%PROTOC%" -I="%PREFIX%\include" -I=src\proto --swift-typealias.exe_out swift\Sources\Generated\Protobuf src\proto\*.proto
 
 :bypass_proto_interface
-
-
-
-:: End of the script
