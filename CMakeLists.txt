@@ -8,12 +8,11 @@ cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 project(TrustWalletCore)
 
-
 include(GNUInstallDirs)
 
 # Configure warnings
 if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
-    set(TW_CXX_WARNINGS "-Wno-shorten-64-to-32 -Wno-deprecated-volatile")
+    set(TW_CXX_WARNINGS "-Wno-shorten-64-to-32 -Wno-deprecated-volatile -Wno-double-promotion")
 endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
