@@ -74,12 +74,12 @@ echo "PROTOC: $PROTOC"
 which $PROTOC
 $PROTOC --version
 
-if ! [ -z $WALLET_PRJ_DIR ] 
+if [ ! -z $WALLET_PRJ_DIR ]
 then
     cd $WALLET_PRJ_DIR
 fi
 
-if ! [ -z $FORCE ] || ! [ -f "swift/Sources/Generated/WalletCore.h" ]; then
+if [ ! -z $FORCE ] || [ ! -f "swift/Sources/Generated/WalletCore.h" ]; then
     # Clean
     echo "Generating coins and interface code."
     rm -rf swift/Sources/Generated
@@ -112,18 +112,18 @@ tools/rust-bindgen $TARGET_OS $ARCH
 
 # Generate Java, C++ and Swift Protobuf files
 if [ -x "$(command -v protoc-gen-swift)" ] && [ $# -eq 0 ]; then
-    if ! [ -z $FORCE ] || ! [ -f "swift/Sources/Generated/Protobuf/Aeternity+Proto.swift" ]; then
+    if [ ! -z $FORCE ] || [ ! -f "swift/Sources/Generated/Protobuf/Aeternity+Proto.swift" ]; then
         echo "Generating swift code"
         "$PROTOC" -I=$PREFIX/include -I=src/proto --cpp_out=src/proto --java_out=lite:jni/proto --swift_out=swift/Sources/Generated/Protobuf --swift_opt=Visibility=Public src/proto/*.proto
     fi
 else
-    if ! [ -z $FORCE ] || ! [ -f "jni/proto/wallet/core/jni/proto/Aeternity.java" ]; then
+    if [ ! -z $FORCE ] || [ ! -f "jni/proto/wallet/core/jni/proto/Aeternity.java" ]; then
         echo "Generating java code"
         "$PROTOC" -I=$PREFIX/include -I=src/proto --cpp_out=src/proto --java_out=lite:jni/proto src/proto/*.proto
     fi
 fi
 
-if ! [ -z $FORCE ] || ! [ -f "src/Hedera/Protobuf/transaction_contents.pb.h" ]; then
+if [ ! -z $FORCE ] || [ ! -f "src/Hedera/Protobuf/transaction_contents.pb.h" ]; then
     # Generate internal message protocol Protobuf files
     echo "Generating internal protobuf files"
     "$PROTOC" -I=$PREFIX/include -I=src/Tron/Protobuf --cpp_out=src/Tron/Protobuf src/Tron/Protobuf/*.proto
@@ -133,7 +133,7 @@ if ! [ -z $FORCE ] || ! [ -f "src/Hedera/Protobuf/transaction_contents.pb.h" ]; 
     "$PROTOC" -I=$PREFIX/include -I=tests/chains/Cosmos/Protobuf --cpp_out=tests/chains/Cosmos/Protobuf tests/chains/Cosmos/Protobuf/*.proto
 fi
 
-if ! [ -z $FORCE ] || ! [ -f "include/TrustWalletCore/TWOntologyProto.h" ]; then
+if [ ! -z $FORCE ] || [ ! -f "include/TrustWalletCore/TWOntologyProto.h" ]; then
     if [ -z $PLUGIN_DIR ]; then
         PLUGIN_DIR="$PREFIX/bin"
     fi
@@ -145,7 +145,7 @@ fi
 
 # Generate Xcode project
 # TODO - Check existent project?
-# if ! [ -z $FORCE ] || ! [ -f "project_file_here"]; then
+# if [ ! -z $FORCE ] || [ ! -f "project_file_here"]; then
 if [ -x "$(command -v xcodegen)" ] && [ $# -eq 0 ]; then
     pushd swift
     xcodegen

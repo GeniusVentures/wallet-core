@@ -71,6 +71,10 @@ if (ANDROID OR IOS_PLATFORM OR TW_COMPILE_WASM)
     set(TW_BUILD_EXAMPLES OFF)
 endif()
 
+if (IOS_PLATFORM OR OSX_PLATFORM)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_LIBCPP_DISABLE_AVAILABILITY")
+endif()
+
 if (TW_UNIT_TESTS)
     message(STATUS "Native unit tests activated")
 else()
