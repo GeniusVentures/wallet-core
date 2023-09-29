@@ -10,13 +10,20 @@ HEADER_NAME="WalletCoreRSBindgen.h"
 TARGET_OS="$1"
 ARCH_ABI="$2"
 FORCE="$3"
+WALLET_OUT_DIR="$4"
+
+if [ -z $WALLET_OUT_DIR ]; then
+	WALLET_OUT_DIR="build/local"
+fi
+
+mkdir -p ${WALLET_OUT_DIR}/lib
 
 
 create_xc_framework() {
   rm -rf $TARGET_XCFRAMEWORK_NAME
-  xcodebuild -create-xcframework -library $BUILD_FOLDER/$TARGET_NAME -library $BUILD_FOLDER/darwin_universal/$TARGET_NAME -library $BUILD_FOLDER/aarch64-apple-ios/release/$TARGET_NAME -output $TARGET_XCFRAMEWORK_NAME
+  xcodebuild -create-xcframework -library ${WALLET_OUT_DIR}/lib/${TARGET_OS}/$TARGET_NAME -library ${WALLET_OUT_DIR}/lib/${TARGET_OS}/darwin_universal/$TARGET_NAME -library $BUILD_FOLDER/aarch64-apple-ios/release/$TARGET_NAME -output $TARGET_XCFRAMEWORK_NAME
   mkdir -p $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
-  cp $BUILD_FOLDER/catalyst/$TARGET_NAME $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
+  cp ${WALLET_OUT_DIR}/lib/${TARGET_OS}/catalyst/$TARGET_NAME $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
 }
 cd rust
 
@@ -33,6 +40,8 @@ ARCH_TABLE[1]="android-armeabi-v7a"
 ARCH_TABLE[2]="android-x86_64"
 ARCH_TABLE[3]="android-x86"
 
+
+
 if [[ "$TARGET_OS" == "android" ]]; then
 	# TODO - Check a way to do this to all targets
 	for KEY in "${!ARCH_TABLE[@]}"; do
@@ -40,6 +49,8 @@ if [[ "$TARGET_OS" == "android" ]]; then
 			if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/${TARGET_TABLE[$KEY]}/release/$TARGET_NAME ]; then
 				echo "Generating build for ${TARGET_TABLE[$KEY]}"
 				cargo build --target ${TARGET_TABLE[$KEY]} --release
+				mkdir -p ${WALLET_OUT_DIR}/lib/${ARCH_ABI}
+				cp ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${ARCH_ABI}
 			fi
 		fi
 	done
@@ -55,7 +66,12 @@ elif [[ "$TARGET_OS" == "ios" ]]; then
 			lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
 			mkdir -p $BUILD_FOLDER/catalyst
 			lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
-		
+			mkdir -p ${WALLET_OUT_DIR}/lib/${TARGET_OS}
+			mkdir -p ${WALLET_OUT_DIR}/lib/${TARGET_OS}/darwin_universal
+			mkdir -p ${WALLET_OUT_DIR}/lib/${TARGET_OS}/catalyst
+			cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${TARGET_OS}
+			cp ${BUILD_FOLDER}/darwin_universal/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${TARGET_OS}/darwin_universal
+			cp ${BUILD_FOLDER}/catalyst/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${TARGET_OS}/catalyst
 			create_xc_framework
 		fi
 	else
@@ -68,6 +84,9 @@ else
 		echo "Generating Native targets"
 		cargo build --release
 		cargo build --target wasm32-unknown-emscripten --release --verbose
+		cp ${BUILD_FOLDER}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/
+		mkdir -p ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
+		cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
 	fi
 fi
 
@@ -75,14 +94,6 @@ if [ ! -z $FORCE ] || [ ! -f ../src/rust/bindgen/$HEADER_NAME ]; then
 	cbindgen --crate $CRATE --output ../src/rust/bindgen/$HEADER_NAME
 fi
 cd -
-
-# TODO - Is this necessary? CMake can just use the output directly. Only reason is to put binaries in the build directory
-#[[ -e rust/target/release/${TARGET_NAME} ]] && cp rust/target/release/${TARGET_NAME} $2/lib/
-#[[ -e rust/target/i686-linux-android/release/${TARGET_NAME} ]] && cp rust/target/i686-linux-android/release/${TARGET_NAME} $2/lib/
-#[[ -e rust/target/x86_64-linux-android/release/${TARGET_NAME} ]] && cp rust/target/x86_64-linux-android/release/${TARGET_NAME} $2/lib/
-#[[ -e rust/target/wasm32-unknown-emscripten/release/${TARGET_NAME} ]] && cp rust/target/wasm32-unknown-emscripten/release/${TARGET_NAME} $2/lib/
-#[[ -e rust/target/armv7-linux-androideabi/release/${TARGET_NAME} ]] && cp rust/target/armv7-linux-androideabi/release/${TARGET_NAME} $2/lib/
-#[[ -e rust/target/aarch64-linux-android/release/${TARGET_NAME} ]] && cp rust/target/aarch64-linux-android/release/${TARGET_NAME} $2/lib/
 
 if [[ `uname` == "Darwin" ]] && [[ "$TARGET_OS" == "ios" ]]; then
   if [ ! -d $TARGET_XCFRAMEWORK_NAME ]; then
