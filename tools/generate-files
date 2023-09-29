@@ -17,8 +17,8 @@ case $i in
     PREFIX="${i#*=}"
     shift
     ;;
-  --prj-dir=*)
-    WALLET_PRJ_DIR="${i#*=}"
+  --out-dir=*)
+    WALLET_OUT_DIR="${i#*=}"
     shift
     ;;
   --plugin-dir=*)
@@ -61,7 +61,7 @@ fi
 echo "PREFIX: $PREFIX"
 echo "ARCH: $ARCH"
 echo "TARGET_OS: $TARGET_OS"
-echo "WALLET_PRJ_DIR: $WALLET_PRJ_DIR"
+echo "WALLET_OUT_DIR: $WALLET_OUT_DIR"
 echo "PLUGIN_DIR: $PLUGIN_DIR"
 echo "FORCE: $FORCE"
 export PATH="$PREFIX/bin":$PATH
@@ -73,11 +73,6 @@ PROTOC="$PREFIX/bin/protoc"
 echo "PROTOC: $PROTOC"
 which $PROTOC
 $PROTOC --version
-
-if [ ! -z $WALLET_PRJ_DIR ]
-then
-    cd $WALLET_PRJ_DIR
-fi
 
 if [ ! -z $FORCE ] || [ ! -f "swift/Sources/Generated/WalletCore.h" ]; then
     # Clean
@@ -108,7 +103,7 @@ fi
 
 
 # Generate rust bindgen
-tools/rust-bindgen $TARGET_OS $ARCH
+tools/rust-bindgen $TARGET_OS $ARCH $FORCE $WALLET_OUT_DIR
 
 # Generate Java, C++ and Swift Protobuf files
 if [ -x "$(command -v protoc-gen-swift)" ] && [ $# -eq 0 ]; then
