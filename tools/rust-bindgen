@@ -3,27 +3,48 @@
 set -e
 
 TARGET_NAME="libwallet_core_rs.a"
-TARGET_XCFRAMEWORK_NAME=swift/WalletCoreRs.xcframework
 BUILD_FOLDER=../rust/target
 CRATE="wallet-core-rs"
 HEADER_NAME="WalletCoreRSBindgen.h"
-TARGET_OS="$1"
-ARCH_ABI="$2"
-FORCE="$3"
-WALLET_OUT_DIR="$4"
+
+for i in "$@"
+do
+case $i in
+  --out-dir=*)
+    WALLET_OUT_DIR="${i#*=}"
+    shift
+    ;;
+  --arch-abi=*)
+    ARCH_ABI="${i#*=}"
+    shift
+    ;;
+  --target-os=*)
+    TARGET_OS="${i#*=}"
+    shift
+    ;;
+  -f|--force)
+    FORCE=YES
+    shift
+    ;;
+esac
+done
 
 if [ -z $WALLET_OUT_DIR ]; then
+	echo "No custom output dir informed. Defaulting to \"build/local\""
 	WALLET_OUT_DIR="build/local"
+	TARGET_XCFRAMEWORK_NAME=swift/WalletCoreRs.xcframework
 fi
+
+TARGET_XCFRAMEWORK_NAME=${WALLET_OUT_DIR}/swift/WalletCoreRs.xcframework
 
 mkdir -p ${WALLET_OUT_DIR}/lib
 
 
 create_xc_framework() {
   rm -rf $TARGET_XCFRAMEWORK_NAME
-  xcodebuild -create-xcframework -library ${WALLET_OUT_DIR}/lib/${TARGET_OS}/$TARGET_NAME -library ${WALLET_OUT_DIR}/lib/${TARGET_OS}/darwin_universal/$TARGET_NAME -library $BUILD_FOLDER/aarch64-apple-ios/release/$TARGET_NAME -output $TARGET_XCFRAMEWORK_NAME
+  xcodebuild -create-xcframework -library ${WALLET_OUT_DIR}/lib/$TARGET_NAME -library ${WALLET_OUT_DIR}/lib/darwin_universal/$TARGET_NAME -library $BUILD_FOLDER/aarch64-apple-ios/release/$TARGET_NAME -output $TARGET_XCFRAMEWORK_NAME
   mkdir -p $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
-  cp ${WALLET_OUT_DIR}/lib/${TARGET_OS}/catalyst/$TARGET_NAME $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
+  cp ${WALLET_OUT_DIR}/lib/catalyst/$TARGET_NAME $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
 }
 cd rust
 
@@ -49,8 +70,9 @@ if [[ "$TARGET_OS" == "android" ]]; then
 			if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/${TARGET_TABLE[$KEY]}/release/$TARGET_NAME ]; then
 				echo "Generating build for ${TARGET_TABLE[$KEY]}"
 				cargo build --target ${TARGET_TABLE[$KEY]} --release
-				mkdir -p ${WALLET_OUT_DIR}/lib/${ARCH_ABI}
-				cp ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${ARCH_ABI}
+			fi
+			if [ -e ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ]; then
+				cp ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
 			fi
 		fi
 	done
@@ -66,12 +88,14 @@ elif [[ "$TARGET_OS" == "ios" ]]; then
 			lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
 			mkdir -p $BUILD_FOLDER/catalyst
 			lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
-			mkdir -p ${WALLET_OUT_DIR}/lib/${TARGET_OS}
-			mkdir -p ${WALLET_OUT_DIR}/lib/${TARGET_OS}/darwin_universal
-			mkdir -p ${WALLET_OUT_DIR}/lib/${TARGET_OS}/catalyst
-			cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${TARGET_OS}
-			cp ${BUILD_FOLDER}/darwin_universal/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${TARGET_OS}/darwin_universal
-			cp ${BUILD_FOLDER}/catalyst/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/${TARGET_OS}/catalyst
+		fi
+		if [ -e ${BUILD_FOLDER}/${TARGET_NAME} ]; then
+			mkdir -p ${WALLET_OUT_DIR}/lib/darwin_universal
+			mkdir -p ${WALLET_OUT_DIR}/lib/catalyst
+
+			cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
+			cp ${BUILD_FOLDER}/darwin_universal/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/darwin_universal
+			cp ${BUILD_FOLDER}/catalyst/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/catalyst
 			create_xc_framework
 		fi
 	else
@@ -87,6 +111,15 @@ else
 		cp ${BUILD_FOLDER}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/
 		mkdir -p ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
 		cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
+	fi
+	if [ -e ${BUILD_FOLDER}/release/${TARGET_NAME} ]; then
+		mkdir -p ${WALLET_OUT_DIR}/lib/darwin_universal
+		mkdir -p ${WALLET_OUT_DIR}/lib/catalyst
+
+		cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
+		cp ${BUILD_FOLDER}/darwin_universal/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/darwin_universal
+		cp ${BUILD_FOLDER}/catalyst/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/catalyst
+		create_xc_framework
 	fi
 fi
 

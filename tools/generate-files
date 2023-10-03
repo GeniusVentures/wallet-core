@@ -101,9 +101,12 @@ if [ ! -z $FORCE ] || [ ! -f "swift/Sources/Generated/WalletCore.h" ]; then
     tools/doxygen_convert_comments
 fi
 
-
+FORCE_RUST=""
+if [ ! -z $FORCE ]; then
+    FORCE_RUST="-f"
+fi
 # Generate rust bindgen
-tools/rust-bindgen $TARGET_OS $ARCH $FORCE $WALLET_OUT_DIR
+tools/rust-bindgen --target-os=$TARGET_OS --arch-abi=$ARCH --out-dir=$WALLET_OUT_DIR $FORCE_RUST
 
 # Generate Java, C++ and Swift Protobuf files
 if [ -x "$(command -v protoc-gen-swift)" ] && [ $# -eq 0 ]; then
