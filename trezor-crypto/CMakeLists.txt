@@ -102,6 +102,7 @@ if(NOT ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC"))
 endif()
 
 if(WIN32)
+    target_compile_options(TrezorCrypto PRIVATE /std:c11)
     target_link_libraries(TrezorCrypto bcrypt)
 endif()
 
