@@ -7,7 +7,7 @@
 #include "Address.h"
 
 #include <climits>
-
+#include <algorithm>
 #include "../Base32.h"
 
 namespace TW::Filecoin {

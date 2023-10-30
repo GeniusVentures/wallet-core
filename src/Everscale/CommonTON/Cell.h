@@ -15,6 +15,12 @@
 #include "Data.h"
 #include "Hash.h"
 
+#ifdef _MSC_VER
+#ifndef _Nonnull
+#define _Nonnull
+#endif
+#endif
+
 namespace TW::CommonTON {
 
 class Cell {
