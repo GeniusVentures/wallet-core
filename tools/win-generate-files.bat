@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 :: Initialize variables
 set "FORCE="
 set "PREFIX="
-set "WALLET_PRJ_DIR="
+set "WALLET_OUT_DIR="
 set "PLUGIN_DIR="
 set "ARCH="
 set "TARGET_OS="
@@ -19,7 +19,7 @@ if "%~1"=="--protobuf-dir" (
     shift
     goto parse_args
 )
-if "%~1"=="--prj-dir" (
+if "%~1"=="--out-dir" (
     set "PARAM_ST=%~1"
     shift
     goto parse_args
@@ -49,8 +49,8 @@ if "!PARAM_ST!"=="--protobuf-dir" (
     shift
     goto parse_args
 )
-if "!PARAM_ST!"=="--prj-dir" (
-    set "WALLET_PRJ_DIR=%~1"
+if "!PARAM_ST!"=="--out-dir" (
+    set "WALLET_OUT_DIR=%~1"
     shift
     goto parse_args
 )
@@ -80,9 +80,10 @@ exit /b
 :done_args
 
 call :fix_paths PREFIX
-call :fix_paths WALLET_PRJ_DIR
+call :fix_paths WALLET_OUT_DIR
 call :fix_paths PLUGIN_DIR
-call :fix_paths WALLET_PRJ_DIR
+call :fix_paths ARCH
+call :fix_paths TARGET_OS
 
 if "%PREFIX%"=="" (
     rem PREFIX not set
@@ -112,7 +113,7 @@ if "%PREFIX%"=="" (
 echo PREFIX: !PREFIX!
 echo ARCH: !ARCH!
 echo TARGET_OS: !TARGET_OS!
-echo WALLET_PRJ_DIR: !WALLET_PRJ_DIR!
+echo WALLET_OUT_DIR: !WALLET_OUT_DIR!
 echo PLUGIN_DIR: !PLUGIN_DIR!
 echo FORCE: !FORCE!
 
@@ -128,10 +129,6 @@ echo PROTOC: !PROTOC!
 !PROTOC! --version
 
 
-:: Change directory to WALLET_PRJ_DIR if it is not empty
-if not "!WALLET_PRJ_DIR!"=="" (
-    cd "!WALLET_PRJ_DIR!"
-)
 
 :: Check if FORCE is set or swift/Sources/Generated/WalletCore.h does not exist
 if "!FORCE!"=="" (
@@ -170,9 +167,14 @@ cd ..
 ::tools\doxygen_convert_comments 
 
 :bypass_coins
+set "FORCE_RUST="
+
+ if not "!FORCE!"=="" (
+    set "FORCE_RUST=-f"
+)
 
 :: Generate Rust bindgen
-call tools\win-rust-bindgen.bat %TARGET_OS% %ARCH% %FORCE%
+call tools\win-rust-bindgen.bat --target-os=%TARGET_OS% --arch-abi=%ARCH% --out-dir=%WALLET_OUT_DIR% %FORCE_RUST%
 
 :: Check if protoc-gen-swift is available and no command line arguments are provided
 if exist "%PREFIX%\bin\protoc-gen-swift" (
