@@ -5,31 +5,31 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #if !defined(TW_EXTERN_C_BEGIN)
-#if defined(__cplusplus)
-#define TW_EXTERN_C_BEGIN extern "C" {
-#define TW_EXTERN_C_END   }
-#else
-#define TW_EXTERN_C_BEGIN
-#define TW_EXTERN_C_END
-#endif
+    #if defined(__cplusplus)
+        #define TW_EXTERN_C_BEGIN extern "C" {
+        #define TW_EXTERN_C_END   }
+    #else
+        #define TW_EXTERN_C_BEGIN
+        #define TW_EXTERN_C_END
+    #endif
 #endif
 
 #ifdef _WIN32
-#ifdef TW_STATIC_LIBRARY
-#define TW_EXTERN
-#define TW_VISIBILITY_DEFAULT
-#define _Nonnull
+    #define TW_VISIBILITY_DEFAULT __declspec(dllexport)
+    #define _Nonnull
+    #ifdef TW_STATIC_LIBRARY
+        #define TW_EXTERN __declspec(dllexport)
+    #else
+        #ifdef TW_EXPORT_LIBRARY
+            #define TW_EXTERN __declspec(dllexport)
+        #else
+            #define TW_EXTERN __declspec(dllimport)
+        #endif
+    #endif
 #else
-#ifdef TW_EXPORT_LIBRARY
-#define TW_EXTERN __declspec(dllexport)
-#else
-#define TW_EXTERN __declspec(dllimport)
-#endif
-#endif
-#else
-#define TW_EXTERN extern
-// Marker for default visibility
-#define TW_VISIBILITY_DEFAULT __attribute__((visibility("default")))
+    #define TW_EXTERN extern
+    // Marker for default visibility
+    #define TW_VISIBILITY_DEFAULT __attribute__((visibility("default")))
 #endif
 
 // Marker for exported classes

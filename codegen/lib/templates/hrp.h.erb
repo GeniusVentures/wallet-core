@@ -28,7 +28,9 @@ enum TWHRP {
 static const char *_Nonnull HRP_<%= coin['id'].upcase %> = "<%= coin['hrp'] %>";
 <% end -%>
 
+TW_EXPORT_FUNC
 const char *_Nullable stringForHRP(enum TWHRP hrp);
+TW_EXPORT_FUNC
 enum TWHRP hrpForString(const char *_Nonnull string);
 
 TW_EXTERN_C_END

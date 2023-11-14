@@ -19,47 +19,36 @@ typedef const void TWData;
 /// allocates memory, the delete call should be called at the end to release memory.
 typedef const void TWString;
 
-/// Creates a TWString from a null-terminated UTF8 byte array. It must be deleted at the end.
-///
-/// \param bytes a null-terminated UTF8 byte array.
-TWString* _Nonnull TWStringCreateWithUTF8Bytes(const char* _Nonnull bytes) TW_VISIBILITY_DEFAULT;
+/// Creates a string from a null-terminated UTF8 byte array. It must be deleted at the end.
+TW_VISIBILITY_DEFAULT
+TWString *_Nonnull TWStringCreateWithUTF8Bytes(const char *_Nonnull bytes);
 
-/// Creates a string from a raw byte array and size. It must be deleted at the end.
-///
-/// \param bytes a raw byte array.
-/// \param size the size of the byte array.
-TWString* _Nonnull TWStringCreateWithRawBytes(const uint8_t* _Nonnull bytes, size_t size) TW_VISIBILITY_DEFAULT;
+/// Creates a string from a raw byte array and size.
+TW_VISIBILITY_DEFAULT
+TWString *_Nonnull TWStringCreateWithRawBytes(const uint8_t *_Nonnull bytes, size_t size);
 
 /// Creates a hexadecimal string from a block of data. It must be deleted at the end.
-///
-/// \param data a block of data.
-TWString* _Nonnull TWStringCreateWithHexData(TWData* _Nonnull data) TW_VISIBILITY_DEFAULT;
+TW_VISIBILITY_DEFAULT
+TWString *_Nonnull TWStringCreateWithHexData(TWData *_Nonnull data);
 
 /// Returns the string size in bytes.
-///
-/// \param string a TWString pointer.
-size_t TWStringSize(TWString* _Nonnull string) TW_VISIBILITY_DEFAULT;
+TW_VISIBILITY_DEFAULT
+size_t TWStringSize(TWString *_Nonnull string);
 
 /// Returns the byte at the provided index.
-///
-/// \param string a TWString pointer.
-/// \param index the index of the byte.
-char TWStringGet(TWString* _Nonnull string, size_t index) TW_VISIBILITY_DEFAULT;
+TW_VISIBILITY_DEFAULT
+char TWStringGet(TWString *_Nonnull string, size_t index);
 
 /// Returns the raw pointer to the string's UTF8 bytes (null-terminated).
-///
-/// \param string a TWString pointer.
-const char* _Nonnull TWStringUTF8Bytes(TWString* _Nonnull string) TW_VISIBILITY_DEFAULT;
+TW_VISIBILITY_DEFAULT
+const char *_Nonnull TWStringUTF8Bytes(TWString *_Nonnull string);
 
-/// Deletes a string created with a `TWStringCreate*` method and frees the memory.
-///
-/// \param string a TWString pointer.
-void TWStringDelete(TWString* _Nonnull string) TW_VISIBILITY_DEFAULT;
+/// Deletes a string created with a `TWStringCreate*` method.  After delete it must not be used (can segfault)!
+TW_VISIBILITY_DEFAULT
+void TWStringDelete(TWString *_Nonnull string);
 
 /// Determines whether two string blocks are equal.
-///
-/// \param lhs a TWString pointer.
-/// \param rhs another TWString pointer.
-bool TWStringEqual(TWString* _Nonnull lhs, TWString* _Nonnull rhs) TW_VISIBILITY_DEFAULT;
+TW_VISIBILITY_DEFAULT
+bool TWStringEqual(TWString *_Nonnull lhs, TWString *_Nonnull rhs);
 
 TW_EXTERN_C_END

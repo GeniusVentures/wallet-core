@@ -22,8 +22,9 @@ struct TWCardano;
 /// \see reference https://docs.cardano.org/native-tokens/minimum-ada-value-requirement
 /// \param tokenBundle serialized data of TW.Cardano.Proto.TokenBundle.
 /// \return the minimum ADA amount.
+TW_VISIBILITY_DEFAULT 
 TW_EXPORT_STATIC_METHOD
-uint64_t TWCardanoMinAdaAmount(TWData *_Nonnull tokenBundle) TW_VISIBILITY_DEFAULT;
+uint64_t TWCardanoMinAdaAmount(TWData *_Nonnull tokenBundle);
 
 /// Calculates the minimum ADA amount needed for an output.
 ///
@@ -32,14 +33,16 @@ uint64_t TWCardanoMinAdaAmount(TWData *_Nonnull tokenBundle) TW_VISIBILITY_DEFAU
 /// \param tokenBundle serialized data of TW.Cardano.Proto.TokenBundle.
 /// \param coinsPerUtxoByte cost per one byte of a serialized UTXO.
 /// \return the minimum ADA amount.
+TW_VISIBILITY_DEFAULT 
 TW_EXPORT_STATIC_METHOD
-uint64_t TWCardanoOutputMinAdaAmount(TWString *_Nonnull toAddress, TWData *_Nonnull tokenBundle, uint64_t coinsPerUtxoByte) TW_VISIBILITY_DEFAULT;
+uint64_t TWCardanoOutputMinAdaAmount(TWString *_Nonnull toAddress, TWData *_Nonnull tokenBundle, uint64_t coinsPerUtxoByte);
 
 /// Return the staking address associated to (contained in) this address. Must be a Base address.
 /// Empty string is returned on error. Result must be freed.
 /// \param baseAddress A valid base address, as string.
 /// \return the associated staking (reward) address, as string, or empty string on error.
+TW_VISIBILITY_DEFAULT 
 TW_EXPORT_STATIC_METHOD
-TWString *_Nonnull TWCardanoGetStakingAddress(TWString *_Nonnull baseAddress) TW_VISIBILITY_DEFAULT;
+TWString *_Nonnull TWCardanoGetStakingAddress(TWString *_Nonnull baseAddress);
 
 TW_EXTERN_C_END
