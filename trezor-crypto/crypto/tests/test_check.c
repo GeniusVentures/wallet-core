@@ -5281,7 +5281,7 @@ START_TEST(test_mnemonic) {
   a = vectors;
   b = vectors + 1;
   c = vectors + 2;
-#define TC_BUF_SIZE 300
+#define TC_BUF_SIZE 308
   char buf[TC_BUF_SIZE];
   while (*a && *b && *c) {
     m = mnemonic_from_data(fromhex(*a), strlen(*a) / 2, buf, TC_BUF_SIZE);
@@ -5296,6 +5296,7 @@ START_TEST(test_mnemonic) {
     a += 3;
     b += 3;
     c += 3;
+    memzero(buf, buf_size);
 #undef TC_BUF_SIZE
   }
 }

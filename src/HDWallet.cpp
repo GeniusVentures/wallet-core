@@ -18,6 +18,7 @@
 #include <TrustWalletCore/TWHRP.h>
 #include <TrustWalletCore/TWPublicKeyType.h>
 
+#include <TrezorCrypto/options.h>
 #include <TrezorCrypto/rand.h>
 #include <TrezorCrypto/bip32.h>
 #include <TrezorCrypto/bip39.h>
@@ -99,7 +100,7 @@ HDWallet<seedSize>::HDWallet(const Data& entropy, const std::string& passphrase)
         throw std::invalid_argument("Invalid mnemonic data");
     }
     mnemonic = mnemonic_chars;
-    memzero(buf, MnemonicBufLength);
+    TW::memzero(buf, MnemonicBufLength);
     if (!random_init()) {
         throw std::runtime_error("Failed to initialize random number generator");
     }
