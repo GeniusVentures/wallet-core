@@ -17,8 +17,8 @@
 #include "Protobuf/stride_liquid_staking.pb.h"
 #include "Protobuf/gov_tx.pb.h"
 #include "Protobuf/crypto_secp256k1_keys.pb.h"
-#include "Protobuf/ibc_applications_transfer_tx.pb.h"
 #include "Protobuf/terra_wasm_v1beta1_tx.pb.h"
+#include "Protobuf/ibc_applications_transfer_tx.pb.h"
 #include "Protobuf/thorchain_bank_tx.pb.h"
 #include "Protobuf/ethermint_keys.pb.h"
 #include "Protobuf/injective_keys.pb.h"
@@ -29,15 +29,41 @@
 #include "Base64.h"
 #include "uint256.h"
 
-#include <google/protobuf/util/json_util.h>
-
 using namespace TW;
 
 namespace TW::Cosmos::Protobuf {
 
+namespace internal {
+
+// Some of the Cosmos blockchains use different public key types for address deriving and transaction signing.
+// `registry.json` contains the public key required to derive an address,
+// while this function prepares the given public key to use it for transaction signing/compiling.
+inline PublicKey preparePublicKey(const PublicKey& publicKey, TWCoinType coin) {
+    return coin == TWCoinTypeNativeEvmos ? publicKey.compressed() : publicKey;
+}
+
+} // namespace internal
+
 using json = nlohmann::json;
 using string = std::string;
 const auto ProtobufAnyNamespacePrefix = "";  // to override default 'type.googleapis.com'
+
+static string broadcastMode(Proto::BroadcastMode mode) {
+    switch (mode) {
+    case Proto::BroadcastMode::BLOCK:
+        return "BROADCAST_MODE_BLOCK";
+    case Proto::BroadcastMode::ASYNC:
+        return "BROADCAST_MODE_ASYNC";
+    default: return "BROADCAST_MODE_SYNC";
+    }
+}
+
+static json broadcastJSON(std::string data, Proto::BroadcastMode mode) {
+    return {
+        {"tx_bytes", data},
+        {"mode", broadcastMode(mode)}
+    };
+}
 
 cosmos::base::v1beta1::Coin convertCoin(const Proto::Amount& amount) {
     cosmos::base::v1beta1::Coin coin;
@@ -126,6 +152,32 @@ google::protobuf::Any convertMessage(const Proto::Message& msg) {
                 msgWithdraw.set_delegator_address(withdraw.delegator_address());
                 msgWithdraw.set_validator_address(withdraw.validator_address());
                 any.PackFrom(msgWithdraw, ProtobufAnyNamespacePrefix);
+                return any;
+            }
+
+        case Proto::Message::kSetWithdrawAddressMessage:
+            {
+                assert(msg.has_set_withdraw_address_message());
+                const auto& withdraw = msg.set_withdraw_address_message();
+                auto msgWithdraw = cosmos::distribution::v1beta1::MsgSetWithdrawAddress();
+                msgWithdraw.set_delegator_address(withdraw.delegator_address());
+                msgWithdraw.set_withdraw_address(withdraw.withdraw_address());
+                any.PackFrom(msgWithdraw, ProtobufAnyNamespacePrefix);
+                return any;
+            }
+
+        case Proto::Message::kExecuteContractMessage:
+            {
+                assert(msg.has_execute_contract_message());
+                const auto& execContract = msg.execute_contract_message();
+                auto executeContractMsg = terra::wasm::v1beta1::MsgExecuteContract();
+                executeContractMsg.set_sender(execContract.sender());
+                executeContractMsg.set_contract(execContract.contract());
+                executeContractMsg.set_execute_msg(execContract.execute_msg());
+                for (auto i = 0; i < execContract.coins_size(); ++i){
+                    *executeContractMsg.add_coins() = convertCoin(execContract.coins(i));
+                }
+                any.PackFrom(executeContractMsg, ProtobufAnyNamespacePrefix);
                 return any;
             }
 
@@ -310,6 +362,26 @@ google::protobuf::Any convertMessage(const Proto::Message& msg) {
                 any.PackFrom(liquid_staking_msg, ProtobufAnyNamespacePrefix);
                 return any;
         }
+        case Proto::Message::kThorchainDepositMessage: {
+                assert(msg.has_thorchain_deposit_message());
+                const auto& deposit = msg.thorchain_deposit_message();
+                types::MsgDeposit msgDeposit;
+                msgDeposit.set_memo(deposit.memo());
+                msgDeposit.set_signer(deposit.signer());
+                for (auto i = 0; i < deposit.coins_size(); ++i) {
+                    auto* coin = msgDeposit.add_coins();
+                    auto originalAsset = deposit.coins(i).asset();
+                    coin->mutable_asset()->set_chain(originalAsset.chain());
+                    coin->mutable_asset()->set_symbol(originalAsset.symbol());
+                    coin->mutable_asset()->set_ticker(originalAsset.ticker());
+                    coin->mutable_asset()->set_synth(originalAsset.synth());
+                    coin->set_amount(deposit.coins(i).amount());
+                    coin->set_decimals(deposit.coins(i).decimals());
+                }
+                any.PackFrom(msgDeposit, ProtobufAnyNamespacePrefix);
+
+                return any;
+        }
 
         default:
             throw std::invalid_argument(std::string("Message not supported ") + std::to_string(msg.message_oneof_case()));
@@ -337,13 +409,19 @@ std::string buildProtoTxBody(const Proto::SigningInput& input) {
 }
 
 std::string buildAuthInfo(const Proto::SigningInput& input, TWCoinType coin) {
+    // AuthInfo
+    const auto privateKey = PrivateKey(input.private_key());
+    const auto publicKey = privateKey.getPublicKey(TWCoinTypePublicKeyType(coin));
+    return buildAuthInfo(input, publicKey, coin);
+}
+
+std::string buildAuthInfo(const Proto::SigningInput& input, const PublicKey& publicKey, TWCoinType coin) {
+    const auto pbk = internal::preparePublicKey(publicKey, coin);
+
     if (input.messages_size() >= 1 && input.messages(0).has_sign_direct_message()) {
         return input.messages(0).sign_direct_message().auth_info_bytes();
     }
-
     // AuthInfo
-    const auto privateKey = PrivateKey(input.private_key());
-    const auto publicKey = privateKey.getPublicKey(TWPublicKeyTypeSECP256k1);
     auto authInfo = cosmos::AuthInfo();
     auto* signerInfo = authInfo.add_signer_infos();
 
@@ -352,19 +430,19 @@ std::string buildAuthInfo(const Proto::SigningInput& input, TWCoinType coin) {
     switch(coin) {
         case TWCoinTypeNativeEvmos: {
             auto pubKey = ethermint::crypto::v1::ethsecp256k1::PubKey();
-            pubKey.set_key(publicKey.bytes.data(), publicKey.bytes.size());
+            pubKey.set_key(pbk.bytes.data(), pbk.bytes.size());
             signerInfo->mutable_public_key()->PackFrom(pubKey, ProtobufAnyNamespacePrefix);
             break;
         }
         case TWCoinTypeNativeInjective: {
             auto pubKey = injective::crypto::v1beta1::ethsecp256k1::PubKey();
-            pubKey.set_key(publicKey.bytes.data(), publicKey.bytes.size());
+            pubKey.set_key(pbk.bytes.data(), pbk.bytes.size());
             signerInfo->mutable_public_key()->PackFrom(pubKey, ProtobufAnyNamespacePrefix);
             break;
         }
         default: {
             auto pubKey = cosmos::crypto::secp256k1::PubKey();
-            pubKey.set_key(publicKey.bytes.data(), publicKey.bytes.size());
+            pubKey.set_key(pbk.bytes.data(), pbk.bytes.size());
             signerInfo->mutable_public_key()->PackFrom(pubKey, ProtobufAnyNamespacePrefix);
         }
     }
@@ -416,15 +494,29 @@ std::string buildProtoTxRaw(const std::string& serializedTxBody, const std::stri
     return txRaw.SerializeAsString();
 }
 
-static string broadcastMode(Proto::BroadcastMode mode) {
-    switch (mode) {
-    case Proto::BroadcastMode::BLOCK:
-        return "BROADCAST_MODE_BLOCK";
-    case Proto::BroadcastMode::ASYNC:
-        return "BROADCAST_MODE_ASYNC";
-    case Proto::BroadcastMode::SYNC:
-    default: return "BROADCAST_MODE_SYNC";
-    }
+std::string signaturePreimageProto(const Proto::SigningInput& input, const PublicKey& publicKey, TWCoinType coin) {
+    // SignDoc Preimage
+    const auto serializedTxBody = buildProtoTxBody(input);
+    const auto serializedAuthInfo = buildAuthInfo(input, publicKey, coin);
+
+    auto signDoc = cosmos::SignDoc();
+    signDoc.set_body_bytes(serializedTxBody);
+    signDoc.set_auth_info_bytes(serializedAuthInfo);
+    signDoc.set_chain_id(input.chain_id());
+    signDoc.set_account_number(input.account_number());
+    return signDoc.SerializeAsString();
+}
+
+std::string buildProtoTxRaw(const Proto::SigningInput& input, const PublicKey& publicKey, const Data& signature, TWCoinType coin) {
+    const auto serializedTxBody = buildProtoTxBody(input);
+    const auto serializedAuthInfo = buildAuthInfo(input, publicKey, coin);
+
+    auto txRaw = cosmos::TxRaw();
+    txRaw.set_body_bytes(serializedTxBody);
+    txRaw.set_auth_info_bytes(serializedAuthInfo);
+    *txRaw.add_signatures() = std::string(signature.begin(), signature.end());
+    auto data = txRaw.SerializeAsString();
+    return broadcastJSON(Base64::encode(Data(data.begin(), data.end())), input.mode()).dump();
 }
 
 std::string buildProtoTxJson(const Proto::SigningInput& input, const std::string& serializedTx) {

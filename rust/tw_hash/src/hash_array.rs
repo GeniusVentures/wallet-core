@@ -9,8 +9,11 @@ use std::fmt;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 use tw_encoding::hex;
+use tw_encoding::hex::ToHex;
 use zeroize::DefaultIsZeroes;
 
+pub type H32 = Hash<4>;
+pub type H160 = Hash<20>;
 pub type H256 = Hash<32>;
 pub type H264 = Hash<33>;
 pub type H512 = Hash<64>;
@@ -36,11 +39,15 @@ pub fn concat<const L: usize, const R: usize, const N: usize>(
 
 /// Represents a fixed-length byte array.
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct Hash<const N: usize>([u8; N]);
 
 impl<const N: usize> DefaultIsZeroes for Hash<N> {}
 
+/// cbindgen:ignore
 impl<const N: usize> Hash<N> {
+    pub const LEN: usize = N;
+
     pub const fn new() -> Self {
         Hash([0; N])
     }
@@ -163,8 +170,7 @@ impl<const N: usize> DerefMut for Hash<N> {
 
 impl<const N: usize> fmt::Display for Hash<N> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let prefixed = false;
-        write!(f, "{}", hex::encode(self.0, prefixed))
+        write!(f, "{}", self.to_hex())
     }
 }
 

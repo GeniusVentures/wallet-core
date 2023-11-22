@@ -31,11 +31,11 @@ uint64_t TWCardanoMinAdaAmount(TWData *_Nonnull tokenBundle);
 /// \see reference https://docs.cardano.org/native-tokens/minimum-ada-value-requirement
 /// \param toAddress valid destination address, as string.
 /// \param tokenBundle serialized data of TW.Cardano.Proto.TokenBundle.
-/// \param coinsPerUtxoByte cost per one byte of a serialized UTXO.
-/// \return the minimum ADA amount.
-TW_VISIBILITY_DEFAULT 
+/// \param coinsPerUtxoByte cost per one byte of a serialized UTXO (Base-10 decimal string).
+/// \return the minimum ADA amount (Base-10 decimal string).
+TW_VISIBILITY_DEFAULT
 TW_EXPORT_STATIC_METHOD
-uint64_t TWCardanoOutputMinAdaAmount(TWString *_Nonnull toAddress, TWData *_Nonnull tokenBundle, uint64_t coinsPerUtxoByte);
+TWString *_Nullable TWCardanoOutputMinAdaAmount(TWString *_Nonnull toAddress, TWData *_Nonnull tokenBundle, TWString *_Nonnull coinsPerUtxoByte);
 
 /// Return the staking address associated to (contained in) this address. Must be a Base address.
 /// Empty string is returned on error. Result must be freed.
@@ -44,5 +44,11 @@ uint64_t TWCardanoOutputMinAdaAmount(TWString *_Nonnull toAddress, TWData *_Nonn
 TW_VISIBILITY_DEFAULT 
 TW_EXPORT_STATIC_METHOD
 TWString *_Nonnull TWCardanoGetStakingAddress(TWString *_Nonnull baseAddress);
+
+/// Return the legacy(byron) address.
+/// \param publicKey A valid public key with TWPublicKeyTypeED25519Cardano type.
+/// \return the legacy(byron) address, as string, or empty string on error.
+TW_EXPORT_STATIC_METHOD
+TWString *_Nonnull TWCardanoGetByronAddress(struct TWPublicKey *_Nonnull publicKey);
 
 TW_EXTERN_C_END

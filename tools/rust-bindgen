@@ -2,6 +2,8 @@
 
 set -e
 
+source "$(dirname $0)/android-sdk"
+
 TARGET_NAME="libwallet_core_rs.a"
 BUILD_FOLDER=../rust/target
 CRATE="wallet-core-rs"

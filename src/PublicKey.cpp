@@ -169,6 +169,8 @@ bool PublicKey::verify(const Data& signature, const Data& message) const {
         verifyBuffer[63] &= 127;
         return ed25519_sign_open(message.data(), message.size(), ed25519PublicKey.data(), verifyBuffer.data()) == 0;
     }
+    case TWPublicKeyTypeStarkex:
+        return rust_public_key_verify(bytes, type, signature, message);
     default:
         throw std::logic_error("Not yet implemented");
     }

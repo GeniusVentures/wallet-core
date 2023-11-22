@@ -89,14 +89,14 @@ endif()
 
 # Source files
 if (${ANDROID})
-    message("Configuring for JNI")
+    message("Configuring for Android JNI")
     file(GLOB_RECURSE core_sources src/*.c src/*.cc src/*.cpp src/*.h jni/cpp/*.cpp jni/cpp/*.h)
     if (${KOTLIN})
         file(GLOB_RECURSE specific_sources
                 jni/kotlin/*.h
                 jni/kotlin/*.c
-                kotlin/wallet-core-kotlin/src/androidMain/cpp/generated/*.h
-                kotlin/wallet-core-kotlin/src/androidMain/cpp/generated/*.c
+                kotlin/wallet-core-kotlin/src/commonAndroidJvmMain/cpp/generated/*.h
+                kotlin/wallet-core-kotlin/src/commonAndroidJvmMain/cpp/generated/*.c
                 )
     else ()
         file(GLOB_RECURSE specific_sources jni/android/*.h jni/android/*.c)
@@ -115,6 +115,25 @@ if (${ANDROID})
     endif ()
     find_library(_RUST_WALLET_LIB HINTS ${WALLET_CORE_BINDGEN_LOCATION} NAMES ${WALLET_CORE_RS_LIB} lib${WALLET_CORE_RS_LIB})
     target_link_libraries(TrustWalletCore PUBLIC ${_RUST_WALLET_LIB} ${PROJECT_NAME}_INTERFACE PRIVATE TrezorCrypto ${Protobuf_LIBRARIES} ${log-lib} Boost::boost)
+elseif (${TW_COMPILE_JAVA})
+    message("Configuring for JNI")
+    file(GLOB_RECURSE core_sources src/*.c src/*.cc src/*.cpp src/*.h jni/cpp/*.cpp jni/cpp/*.h)
+    if (${TW_COMPILE_KOTLIN})
+        file(GLOB_RECURSE specific_sources
+                jni/kotlin/*.h
+                jni/kotlin/*.c
+                kotlin/wallet-core-kotlin/src/commonAndroidJvmMain/cpp/generated/*.h
+                kotlin/wallet-core-kotlin/src/commonAndroidJvmMain/cpp/generated/*.c
+                )
+    else ()
+        file(GLOB_RECURSE specific_sources jni/android/*.h jni/android/*.c)
+    endif ()
+    set(sources ${core_sources} ${specific_sources})
+    add_library(TrustWalletCore ${TW_LIB_TYPE} ${sources} ${PROTO_SRCS} ${PROTO_HDRS})
+    find_package(JNI REQUIRED)
+    target_include_directories(TrustWalletCore PRIVATE ${JNI_INCLUDE_DIRS})
+    find_library(_RUST_WALLET_LIB HINTS ${WALLET_CORE_BINDGEN_LOCATION} NAMES ${WALLET_CORE_RS_LIB} lib${WALLET_CORE_RS_LIB})
+    target_link_libraries(TrustWalletCore PUBLIC ${_RUST_WALLET_LIB} ${PROJECT_NAME}_INTERFACE PRIVATE TrezorCrypto protobuf Boost::boost)
 else()
     file(GLOB_RECURSE sources src/*.c src/*.cc src/*.cpp src/*.h)
     if(WIN32)

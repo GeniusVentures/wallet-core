@@ -7,43 +7,14 @@
 use tw_encoding::hex;
 use tw_hash::sha2::sha256;
 use tw_hash::sha3::keccak256;
-use tw_keypair::ffi::pubkey::{
-    tw_public_key_create_with_data, tw_public_key_delete, tw_public_key_verify, TWPublicKey,
-};
+use tw_keypair::ffi::pubkey::{tw_public_key_delete, tw_public_key_verify};
+use tw_keypair::test_utils::tw_public_key_helper::TWPublicKeyHelper;
 use tw_keypair::tw::PublicKeyType;
 use tw_memory::ffi::c_byte_array::CByteArray;
 
-struct TWPublicKeyHelper {
-    ptr: *mut TWPublicKey,
-}
-
-impl TWPublicKeyHelper {
-    fn with_bytes<T: Into<Vec<u8>>>(bytes: T, ty: PublicKeyType) -> TWPublicKeyHelper {
-        let public_key_raw = CByteArray::from(bytes.into());
-        let ptr = unsafe {
-            tw_public_key_create_with_data(public_key_raw.data(), public_key_raw.size(), ty as u32)
-        };
-        TWPublicKeyHelper { ptr }
-    }
-
-    fn with_hex(hex: &str, ty: PublicKeyType) -> TWPublicKeyHelper {
-        let priv_key_data = hex::decode(hex).unwrap();
-        TWPublicKeyHelper::with_bytes(priv_key_data, ty)
-    }
-}
-
-impl Drop for TWPublicKeyHelper {
-    fn drop(&mut self) {
-        if self.ptr.is_null() {
-            return;
-        }
-        unsafe { tw_public_key_delete(self.ptr) };
-    }
-}
-
 fn test_verify(ty: PublicKeyType, public: &str, msg: &str, sign: &str) {
     let tw_public = TWPublicKeyHelper::with_hex(public, ty);
-    assert!(!tw_public.ptr.is_null());
+    assert!(!tw_public.is_null());
 
     let signature_bytes = hex::decode(sign).unwrap();
     let signature_raw = CByteArray::from(signature_bytes);
@@ -52,7 +23,7 @@ fn test_verify(ty: PublicKeyType, public: &str, msg: &str, sign: &str) {
 
     let valid = unsafe {
         tw_public_key_verify(
-            tw_public.ptr,
+            tw_public.ptr(),
             signature_raw.data(),
             signature_raw.size(),
             msg_raw.data(),
@@ -68,34 +39,34 @@ fn test_tw_public_key_create_by_type() {
         "02a18a98316b5f52596e75bfa5ca9fa9912edd0c989b86b73d41bb64c9c6adb992",
         PublicKeyType::Secp256k1,
     );
-    assert!(!tw_public.ptr.is_null());
+    assert!(!tw_public.is_null());
 
     // Compressed pubkey with '03' prefix.
     let tw_public = TWPublicKeyHelper::with_hex(
         "0399c6f51ad6f98c9c583f8e92bb7758ab2ca9a04110c0a1126ec43e5453d196c1",
         PublicKeyType::Secp256k1,
     );
-    assert!(!tw_public.ptr.is_null());
+    assert!(!tw_public.is_null());
 
     let tw_public = TWPublicKeyHelper::with_hex(
         "0499c6f51ad6f98c9c583f8e92bb7758ab2ca9a04110c0a1126ec43e5453d196c166b489a4b7c491e7688e6ebea3a71fc3a1a48d60f98d5ce84c93b65e423fde91",
         PublicKeyType::Secp256k1Extended,
     );
-    assert!(!tw_public.ptr.is_null());
+    assert!(!tw_public.is_null());
 
     // Pass an extended pubkey, but Secp256k1 type.
     let tw_public = TWPublicKeyHelper::with_hex(
         "0499c6f51ad6f98c9c583f8e92bb7758ab2ca9a04110c0a1126ec43e5453d196c166b489a4b7c491e7688e6ebea3a71fc3a1a48d60f98d5ce84c93b65e423fde91",
         PublicKeyType::Secp256k1,
     );
-    assert!(tw_public.ptr.is_null());
+    assert!(tw_public.is_null());
 
     // Pass a compressed pubkey, but Secp256k1Extended type.
     let tw_public = TWPublicKeyHelper::with_hex(
         "02a18a98316b5f52596e75bfa5ca9fa9912edd0c989b86b73d41bb64c9c6adb992",
         PublicKeyType::Secp256k1Extended,
     );
-    assert!(tw_public.ptr.is_null());
+    assert!(tw_public.is_null());
 }
 
 #[test]
@@ -112,6 +83,14 @@ fn test_tw_public_key_verify_secp256k1() {
 }
 
 #[test]
+fn test_tw_public_key_verify_nist256p1() {
+    let public = "026d786ab8fda678cf50f71d13641049a393b325063b8c0d4e5070de48a2caf9ab";
+    let msg = hex::encode(keccak256(b"hello").as_slice(), false);
+    let sign = "8859e63a0c0cc2fc7f788d7e78406157b288faa6f76f76d37c4cd1534e8d83c468f9fd6ca7dde378df594625dcde98559389569e039282275e3d87c26e36447401";
+    test_verify(PublicKeyType::Nist256p1, public, &msg, sign);
+}
+
+#[test]
 fn test_tw_public_key_verify_ed25519() {
     let public = "4870d56d074c50e891506d78faa4fb69ca039cc5f131eb491e166b975880e867";
     let msg = hex::encode(sha256(b"Hello").as_slice(), false);
@@ -125,6 +104,14 @@ fn test_tw_public_key_verify_ed25519_blake2b() {
     let msg = hex::encode(sha256(b"Hello").as_slice(), false);
     let sign = "5c1473944cd0234ebc5a91b2966b9e707a33b936dadd149417a2e53b6b3fc97bef17b767b1690708c74d7b4c8fe48703fd44a6ef59d4cc5b9f88ba992db0a003";
     test_verify(PublicKeyType::Ed25519Blake2b, public, &msg, sign);
+}
+
+#[test]
+fn test_tw_public_key_verify_curve25519_waves() {
+    let public = "559a50cb45a9a8e8d4f83295c354725990164d10bb505275d1a3086c08fb935d";
+    let msg = "0402559a50cb45a9a8e8d4f83295c354725990164d10bb505275d1a3086c08fb935d00000000016372e852120000000005f5e1000000000005f5e10001570acc4110b78a6d38b34d879b5bba38806202ecf1732f8542000766616c6166656c";
+    let sign = "af7989256f496e103ce95096b3f52196dd9132e044905fe486da3b829b5e403bcba95ab7e650a4a33948c2d05cfca2dce4d4df747e26402974490fb4c49fbe8f";
+    test_verify(PublicKeyType::Curve25519Waves, public, msg, sign);
 }
 
 #[test]

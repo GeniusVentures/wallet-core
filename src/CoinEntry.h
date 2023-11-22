@@ -83,6 +83,33 @@ void signTemplate(const Data& dataIn, Data& dataOut) {
     dataOut.insert(dataOut.end(), serializedOut.begin(), serializedOut.end());
 }
 
+// In each coin's Entry.cpp that is implemented in Rust, this function calls `tw_any_address_is_valid*`.
+bool validateAddressRust(TWCoinType coin, const std::string& address, const PrefixVariant& addressPrefix);
+
+// In each coin's Entry.cpp that is implemented in Rust, this function calls `tw_any_address_create_with_string*`.
+std::string normalizeAddressRust(TWCoinType coin, const std::string& address);
+
+// In each coin's Entry.cpp that is implemented in Rust, this function calls `tw_any_address_create_with_public_key*`.
+std::string deriveAddressRust(TWCoinType coin, const PublicKey& publicKey, TWDerivation derivation, const PrefixVariant& addressPrefix);
+
+// In each coin's Entry.cpp that is implemented in Rust, this function calls `tw_any_address_create_with_string*`.
+Data addressToDataRust(TWCoinType coin, const std::string& address);
+
+// In each coin's Entry.cpp that is implemented in Rust, this function calls `tw_any_signer_sign`.
+// Note: use output parameter to avoid unneeded copies
+void signRust(const Data& dataIn, TWCoinType coin, Data& dataOut);
+
+// In each coin's Entry.cpp that is implemented in Rust, this function calls `tw_transaction_compiler_pre_image_hashes`.
+Data preImageHashesRust(TWCoinType coin, const Data& dataIn);
+
+// In each coin's Entry.cpp that is implemented in Rust, this function calls `tw_transaction_compiler_compile`.
+// Note: use output parameter to avoid unneeded copies
+void compileRust(TWCoinType coin,
+                 const Data& dataIn,
+                 const std::vector<Data>& signatures,
+                 const std::vector<PublicKey>& publicKeys,
+                 Data& dataOut);
+
 // Note: use output parameter to avoid unneeded copies
 template <typename Planner, typename Input>
 void planTemplate(const Data& dataIn, Data& dataOut) {
@@ -101,12 +128,45 @@ Data txCompilerTemplate(const Data& dataIn, Func&& fnHandler) {
     if (!input.ParseFromArray(dataIn.data(), (int)dataIn.size())) {
         output.set_error(Common::Proto::Error_input_parse);
         output.set_error_message("failed to parse input data");
-        return TW::data(output.SerializeAsString());;
+        return TW::data(output.SerializeAsString());
     }
 
     try {
         // each coin function handler
         fnHandler(input, output);
+    } catch (const std::exception& e) {
+        output.set_error(Common::Proto::Error_internal);
+        output.set_error_message(e.what());
+    }
+    return TW::data(output.SerializeAsString());
+}
+
+// This template will be used for compile in each coin's Entry.cpp.
+// It is a helper function to simplify exception handle that validates if there is only one `signatures` and one `publicKeys`.
+template <typename Input, typename Output, typename Func>
+Data txCompilerSingleTemplate(const Data& dataIn, const std::vector<Data>& signatures, const std::vector<PublicKey>& publicKeys, Func&& fnHandler) {
+    auto input = Input();
+    auto output = Output();
+    if (!input.ParseFromArray(dataIn.data(), (int)dataIn.size())) {
+        output.set_error(Common::Proto::Error_input_parse);
+        output.set_error_message("failed to parse input data");
+        return TW::data(output.SerializeAsString());
+    }
+
+    if (signatures.empty() || publicKeys.empty()) {
+        output.set_error(Common::Proto::Error_invalid_params);
+        output.set_error_message("empty signatures or publickeys");
+        return TW::data(output.SerializeAsString());
+    }
+    if (signatures.size() != 1 || publicKeys.size() != 1) {
+        output.set_error(Common::Proto::Error_no_support_n2n);
+        output.set_error_message("signatures and publickeys size can only be one");
+        return TW::data(output.SerializeAsString());
+    }
+
+    try {
+        // each coin function handler
+        fnHandler(input, output, signatures[0], publicKeys[0]);
     } catch (const std::exception& e) {
         output.set_error(Common::Proto::Error_internal);
         output.set_error_message(e.what());
