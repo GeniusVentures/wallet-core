@@ -78,7 +78,7 @@ if (TW_USE_EXTERNAL_PROTOC)
     find_package(Protobuf CONFIG REQUIRED)
     include_directories(${Protobuf_INCLUDE_DIRS})
     if (NOT DEFINED Protobuf_LIBRARIES)
-        find_library(Protobuf_LIBRARIES HINTS ${Protobuf_LIB_DIR} NAMES protobuf libprotobuf)
+        find_library(Protobuf_LIBRARIES HINTS ${Protobuf_LIB_DIR} NAMES protobuf libprotobuf protobufd libprotobufd)
     endif()
 else()
     # Dependencies
