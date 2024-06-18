@@ -10,57 +10,53 @@
 
 set -e
 
-for i in "$@"
-do
-case $i in
-  --protobuf-dir=*)
-    PREFIX="${i#*=}"
-    shift
-    ;;
-  --out-dir=*)
-    WALLET_OUT_DIR="${i#*=}"
-    shift
-    ;;
-  --plugin-dir=*)
-    PLUGIN_DIR="${i#*=}"
-    shift
-    ;;
-  --arch-abi=*)
-    ARCH="${i#*=}"
-    shift
-    ;;
-  --target-os=*)
-    TARGET_OS="${i#*=}"
-    shift
-    ;;
-  -f|--force)
-    FORCE=YES
-    shift
-    ;;
-  -x|--xcode-gen)
-    XCODEGENERATE=YES
-    shift
-    ;;
-esac
+for i in "$@"; do
+    case $i in
+    --protobuf-dir=*)
+        PREFIX="${i#*=}"
+        shift
+        ;;
+    --out-dir=*)
+        WALLET_OUT_DIR="${i#*=}"
+        shift
+        ;;
+    --plugin-dir=*)
+        PLUGIN_DIR="${i#*=}"
+        shift
+        ;;
+    --arch-abi=*)
+        ARCH="${i#*=}"
+        shift
+        ;;
+    --target-os=*)
+        TARGET_OS="${i#*=}"
+        shift
+        ;;
+    -f | --force)
+        FORCE=YES
+        shift
+        ;;
+    -x | --xcode-gen)
+        XCODEGENERATE=YES
+        shift
+        ;;
+    esac
 done
 
 # This script works in both Docker and normal build environments.
 # Protobuf and co. tools are taken from: $PREFIX if provided, or from $PWD/build/local if exists, or from /usr/bin
-if [ -z $PREFIX ]
-then
+if [ -z $PREFIX ]; then
     # PREFIX not set
     ROOT="$PWD"
     PREFIX="$ROOT/build/local"
-    if  [ ! -d $PREFIX ] || \
-        [ ! -d $PREFIX/include ] || \
-        [ ! -f $PREFIX/bin/protoc ] || \
-        [ ! -f $PREFIX/bin/protoc-gen-c-typedef ]
-    then
+    if [ ! -d $PREFIX ] ||
+        [ ! -d $PREFIX/include ] ||
+        [ ! -f $PREFIX/bin/protoc ] ||
+        [ ! -f $PREFIX/bin/protoc-gen-c-typedef ]; then
         echo $PREFIX does not exist or not complete, fallback to /usr/local
         PREFIX=/usr/local
     fi
 fi
-
 
 echo "PREFIX: $PREFIX"
 echo "ARCH: $ARCH"
@@ -78,27 +74,22 @@ echo "PROTOC: $PROTOC"
 which $PROTOC
 $PROTOC --version
 
-if [ ! -z $WALLET_PRJ_DIR ]
-then
-    cd $WALLET_PRJ_DIR
-fi
-
 if [ ! -z $FORCE ] || [ ! -f "swift/Sources/Generated/WalletCore.h" ]; then
     # Clean
     echo "Generating coins and interface code."
     rm -rf swift/Sources/Generated
     rm -rf jni/java/wallet/core/jni
     rm -rf jni/android/generated
-    
+
     mkdir -p swift/Sources/Generated/Protobuf swift/Sources/Generated/Enums
-    
+
     # Generate coins info from registry.json
     codegen/bin/coins
-    
+
     # Generate interface code, Swift bindings excluded.
     codegen/bin/codegen
-    
-    # Generate Swift bindings with codegen-v2. This is a transitionary process 
+
+    # Generate Swift bindings with codegen-v2. This is a transitionary process
     # and will eventually deprecate the current codegen/ entirely.
     cd codegen-v2/
     cargo run -- swift
@@ -153,15 +144,15 @@ fi
 # Generate Xcode project
 # TODO - Check existent project?
 # if [ ! -z $FORCE ] || [ ! -f "project_file_here"]; then
-if [ -x "$(command -v xcodegen)" ] && [ $# -eq 0 ]; then
-    pushd swift
-    xcodegen
-    pod install
-    popd
-elif [ "$TARGET_OS" == "android" ]; then
-    echo -e "\nWARNING: Android detected, skipping xcodegen generation"
-else
-    echo -e "\nWARNING: Skipped generating Xcode project because the xcodegen tool is not installed."
+if [ ! -z $XCODEGENERATE ]; then
+    if [ "$TARGET_OS" == "ios" ]; then
+        if [ -x "$(command -v xcodegen)" ] && [ $# -eq 0 ]; then
+            pushd swift
+            xcodegen
+            pod install
+            popd
+        fi
+    fi
 fi
 
 #cd $ROOT

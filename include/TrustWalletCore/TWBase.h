@@ -41,22 +41,22 @@
 #define TW_EXPORT_STRUCT
 
 // Marker for exported enums
-#define TW_EXPORT_ENUM(type)
+#define TW_EXPORT_ENUM(...)
 
 // Marker for exported functions
-#define TW_EXPORT_FUNC extern
+#define TW_EXPORT_FUNC TW_EXTERN
 
 // Marker for exported methods
-#define TW_EXPORT_METHOD extern
+#define TW_EXPORT_METHOD TW_EXTERN
 
 // Marker for exported properties
-#define TW_EXPORT_PROPERTY extern
+#define TW_EXPORT_PROPERTY TW_EXTERN
 
 // Marker for exported static methods
-#define TW_EXPORT_STATIC_METHOD extern
+#define TW_EXPORT_STATIC_METHOD TW_EXTERN
 
 // Marker for exported static properties
-#define TW_EXPORT_STATIC_PROPERTY extern
+#define TW_EXPORT_STATIC_PROPERTY TW_EXTERN
 
 // Marker for discardable result (static) method
 #define TW_METHOD_DISCARDABLE_RESULT
@@ -64,7 +64,13 @@
 // Marker for Protobuf types to be serialized across the interface
 #define PROTO(x) TWData *
 
-#if __has_feature(assume_nonnull)
+#ifdef _MSC_VER
+#define TW_HAS_FEATURE(feature) 0
+#else
+#define TW_HAS_FEATURE(feature) __has_feature(feature)
+#endif
+
+#if TW_HAS_FEATURE(assume_nonnull)
 #define TW_ASSUME_NONNULL_BEGIN _Pragma("clang assume_nonnull begin")
 #define TW_ASSUME_NONNULL_END   _Pragma("clang assume_nonnull end")
 #else
@@ -80,7 +86,7 @@
 #  define TW_DEPRECATED_FOR(since, replacement)
 #endif
 
-#if !__has_feature(nullability)
+#if !TW_HAS_FEATURE(nullability)
 #ifndef _Nullable
 #define _Nullable
 #endif

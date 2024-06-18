@@ -3,7 +3,6 @@
 set -e
 
 TARGET_NAME="libwallet_core_rs.a"
-TARGET_XCFRAMEWORK_NAME=swift/WalletCoreRs.xcframework
 BUILD_FOLDER=../rust/target
 CRATE="wallet-core-rs"
 HEADER_NAME="WalletCoreRSBindgen.h"

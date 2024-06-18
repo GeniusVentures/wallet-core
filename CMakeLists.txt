@@ -186,6 +186,10 @@ endif ()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/swift/cpp.xcconfig.in ${CMAKE_CURRENT_SOURCE_DIR}/swift/cpp.xcconfig @ONLY)
 
+if(WIN32 AND NOT TW_STATIC_LIBRARY)
+    install(TARGETS TrustWalletCore RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
 install(TARGETS TrustWalletCore
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

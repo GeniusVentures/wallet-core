@@ -76,6 +76,9 @@ endif()
 
 target_compile_options(TrezorCrypto PRIVATE ${TW_WARNING_FLAGS} PUBLIC)
 
+if(WIN32)
+    target_link_libraries(TrezorCrypto bcrypt)
+endif()
 target_include_directories(TrezorCrypto
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -41,9 +41,9 @@ if (NOT DEFINED Protobuf_LIBRARIES)
 endif()
 
 add_executable(protoc-gen-c-typedef c_typedef.cc ${PROTO_SRCS} ${PROTO_HDRS})
-target_link_libraries(protoc-gen-c-typedef ${TW_STATIC_PRIVATE} ${_protoc_lib_set} ${_protobuf_lib_set} ${TW_PTHREAD_LIB})
+target_link_libraries(protoc-gen-c-typedef ${TW_STATIC_PRIVATE} ${Protobuf_PROTOC_LIBRARIES} ${Protobuf_LIBRARIES} ${TW_PTHREAD_LIB})
 
 add_executable(protoc-gen-swift-typealias swift_typealias.cc ${PROTO_SRCS} ${PROTO_HDRS})
-target_link_libraries(protoc-gen-swift-typealias ${_protoc_lib_set} ${_protobuf_lib_set})
+target_link_libraries(protoc-gen-swift-typealias ${Protobuf_PROTOC_LIBRARIES} ${Protobuf_LIBRARIES})
 
 install(TARGETS protoc-gen-c-typedef protoc-gen-swift-typealias DESTINATION bin)

@@ -150,3 +150,5 @@ void __attribute__((weak)) random_buffer(uint8_t *buf, size_t len) {
     }
     close(randomData);
 }
+
+#endif
