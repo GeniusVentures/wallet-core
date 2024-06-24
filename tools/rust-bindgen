@@ -7,44 +7,41 @@ BUILD_FOLDER=../rust/target
 CRATE="wallet-core-rs"
 HEADER_NAME="WalletCoreRSBindgen.h"
 
-for i in "$@"
-do
-case $i in
-  --out-dir=*)
-    WALLET_OUT_DIR="${i#*=}"
-    shift
-    ;;
-  --arch-abi=*)
-    ARCH_ABI="${i#*=}"
-    shift
-    ;;
-  --target-os=*)
-    TARGET_OS="${i#*=}"
-    shift
-    ;;
-  -f|--force)
-    FORCE=YES
-    shift
-    ;;
-esac
+for i in "$@"; do
+    case $i in
+    --out-dir=*)
+        WALLET_OUT_DIR="${i#*=}"
+        shift
+        ;;
+    --arch-abi=*)
+        ARCH_ABI="${i#*=}"
+        shift
+        ;;
+    --target-os=*)
+        TARGET_OS="${i#*=}"
+        shift
+        ;;
+    -f | --force)
+        FORCE=YES
+        shift
+        ;;
+    esac
 done
 
 if [ -z $WALLET_OUT_DIR ]; then
-	echo "No custom output dir informed. Defaulting to \"build/local\""
-	WALLET_OUT_DIR="build/local"
-	TARGET_XCFRAMEWORK_NAME=swift/WalletCoreRs.xcframework
+    echo "No custom output dir informed. Defaulting to \"build/local\""
+    WALLET_OUT_DIR="build/local"
+    TARGET_XCFRAMEWORK_NAME=swift/WalletCoreRs.xcframework
 fi
 
 TARGET_XCFRAMEWORK_NAME=${WALLET_OUT_DIR}/swift/WalletCoreRs.xcframework
-
 mkdir -p ${WALLET_OUT_DIR}/lib
 
-
 create_xc_framework() {
-  rm -rf $TARGET_XCFRAMEWORK_NAME
-  xcodebuild -create-xcframework -library ${WALLET_OUT_DIR}/lib/$TARGET_NAME -library ${WALLET_OUT_DIR}/lib/darwin_universal/$TARGET_NAME -library $BUILD_FOLDER/aarch64-apple-ios/release/$TARGET_NAME -output $TARGET_XCFRAMEWORK_NAME
-  mkdir -p $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
-  cp ${WALLET_OUT_DIR}/lib/catalyst/$TARGET_NAME $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
+    rm -rf $TARGET_XCFRAMEWORK_NAME
+    xcodebuild -create-xcframework -library $BUILD_FOLDER/$TARGET_NAME -library $BUILD_FOLDER/darwin_universal/$TARGET_NAME -library $BUILD_FOLDER/aarch64-apple-ios/release/$TARGET_NAME -output $TARGET_XCFRAMEWORK_NAME
+    mkdir -p $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
+    cp $BUILD_FOLDER/catalyst/$TARGET_NAME $TARGET_XCFRAMEWORK_NAME/ios-arm64_x86_64-maccatalyst
 }
 cd rust
 
@@ -61,87 +58,76 @@ ARCH_TABLE[1]="android-armeabi-v7a"
 ARCH_TABLE[2]="android-x86_64"
 ARCH_TABLE[3]="android-x86"
 
-
-
 if [[ "$TARGET_OS" == "android" ]]; then
-	# TODO - Check a way to do this to all targets
-	for KEY in "${!ARCH_TABLE[@]}"; do
-		if [ -z $ARCH_ABI ] || [ "${ARCH_TABLE[$KEY]}" == "$TARGET_OS-$ARCH_ABI" ]; then
-			if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/${TARGET_TABLE[$KEY]}/release/$TARGET_NAME ]; then
-				echo "Generating build for ${TARGET_TABLE[$KEY]}"
-				cargo build --target ${TARGET_TABLE[$KEY]} --release
-			fi
-			if [ -e ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ]; then
-				cp ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
-			fi
-		fi
-	done
+    # TODO - Check a way to do this to all targets
+    for KEY in "${!ARCH_TABLE[@]}"; do
+        if [ -z $ARCH_ABI ] || [ "${ARCH_TABLE[$KEY]}" == "$TARGET_OS-$ARCH_ABI" ]; then
+            if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/${TARGET_TABLE[$KEY]}/release/$TARGET_NAME ]; then
+                echo "Generating build for ${TARGET_TABLE[$KEY]}"
+                cargo +nightly build -Z build-std=std,panic_abort --target ${TARGET_TABLE[$KEY]} --release --lib
+            fi
+            if [ -e ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ]; then
+                cp ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
+            fi
+        fi
+    done
 elif [[ "$TARGET_OS" == "ios" ]]; then
-	if [ `uname` == "Darwin" ]; then
-		if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/$TARGET_NAME ]; then
-			echo "Generating iOS targets"
-			cargo build --target aarch64-apple-ios --target aarch64-apple-ios-sim --target x86_64-apple-ios --target aarch64-apple-darwin --target x86_64-apple-darwin --release &
-			cargo +nightly build -Z build-std --target aarch64-apple-ios-macabi --target x86_64-apple-ios-macabi --release &
-			wait
-			lipo $BUILD_FOLDER/x86_64-apple-ios/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-ios-sim/release/$TARGET_NAME -create -output $BUILD_FOLDER/$TARGET_NAME
-			mkdir -p $BUILD_FOLDER/darwin_universal
-			lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
-			mkdir -p $BUILD_FOLDER/catalyst
-			lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
-		fi
-		if [ -e ${BUILD_FOLDER}/${TARGET_NAME} ]; then
-			mkdir -p ${WALLET_OUT_DIR}/lib/darwin_universal
-			mkdir -p ${WALLET_OUT_DIR}/lib/catalyst
+    if [ $(uname) == "Darwin" ]; then
+        if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/$TARGET_NAME ]; then
+            echo "Generating iOS targets"
+            cargo +nightly build -Z build-std=std,panic_abort --target aarch64-apple-ios --target aarch64-apple-ios-sim --target x86_64-apple-ios --target aarch64-apple-darwin --target x86_64-apple-darwin --target aarch64-apple-ios-macabi --target x86_64-apple-ios-macabi --release --lib &
+            wait
+            lipo $BUILD_FOLDER/x86_64-apple-ios/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-ios-sim/release/$TARGET_NAME -create -output $BUILD_FOLDER/$TARGET_NAME
+            mkdir -p $BUILD_FOLDER/darwin_universal
+            lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/darwin_universal/$TARGET_NAME
+            mkdir -p $BUILD_FOLDER/catalyst
+            lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
 
-			cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
-			cp ${BUILD_FOLDER}/darwin_universal/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/darwin_universal
-			cp ${BUILD_FOLDER}/catalyst/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/catalyst
-			create_xc_framework
-		fi
-	else
-		echo "Error, Trying to build iOS on a Linux maybe?"
-		exit 1
-	fi
+            create_xc_framework
+        fi
+    else
+        echo "Error, Trying to build iOS on a Linux maybe?"
+        exit 1
+    fi
 elif [[ "$TARGET_OS" == "darwin" ]]; then
-	if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME ]; then
-		echo "Generating Native targets"
-		cargo build --target x86_64-apple-darwin --release 
-		cargo build --target wasm32-unknown-emscripten --release --verbose
-	fi
-	if [ -e ${BUILD_FOLDER}/x86_64-apple-darwin/release/${TARGET_NAME} ]; then
+    if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME ]; then
+        echo "Generating Native targets"
+        cargo build --target x86_64-apple-darwin --release
+        cargo build --target wasm32-unknown-emscripten --release --verbose
+    fi
+    if [ -e ${BUILD_FOLDER}/x86_64-apple-darwin/release/${TARGET_NAME} ]; then
         mkdir -p ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
-        
+
         cp ${BUILD_FOLDER}/x86_64-apple-darwin/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/
         cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
-	fi
+    fi
 else
-	# TODO - This was called if not "android" before, so it was called when ios and whatnot?
-	if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/release/$TARGET_NAME ]; then
-		echo "Generating Native targets"
-		cargo build --release 
-		cargo build --target wasm32-unknown-emscripten --release --verbose
-	fi
-	if [ -e ${BUILD_FOLDER}/release/${TARGET_NAME} ]; then
+    # TODO - This was called if not "android" before, so it was called when ios and whatnot?
+    if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/release/$TARGET_NAME ]; then
+        echo "Generating Native targets"
+        cargo build --release
+        cargo build --target wasm32-unknown-emscripten --release --verbose
+    fi
+    if [ -e ${BUILD_FOLDER}/release/${TARGET_NAME} ]; then
         mkdir -p ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
-        
+
         cp ${BUILD_FOLDER}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/
         cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
-	fi
+    fi
 fi
 
 if [ ! -z $FORCE ] || [ ! -f ../src/rust/bindgen/$HEADER_NAME ]; then
-	cbindgen --crate $CRATE --output ../src/rust/bindgen/$HEADER_NAME
+    cbindgen --crate $CRATE --output ../src/rust/bindgen/$HEADER_NAME
 fi
 cd -
 
-if [[ `uname` == "Darwin" ]] && [[ "$TARGET_OS" == "ios" ]]; then
-  if [ ! -d $TARGET_XCFRAMEWORK_NAME ]; then
-    mkdir -p $TARGET_XCFRAMEWORK_NAME
-  fi
-mkdir -p $TARGET_XCFRAMEWORK_NAME
-if  [ ! -z $FORCE ] || [ ! -f $TARGET_XCFRAMEWORK_NAME/Info.plist ]; then
-cd rust
-cat > ../$TARGET_XCFRAMEWORK_NAME/Info.plist << EOF
+if [[ $(uname) == "Darwin" ]] && [[ "$TARGET_OS" == "ios" ]]; then
+    if [ ! -d $TARGET_XCFRAMEWORK_NAME ]; then
+        mkdir -p $TARGET_XCFRAMEWORK_NAME
+    fi
+    if [ ! -z $FORCE ] || [ ! -f $TARGET_XCFRAMEWORK_NAME/Info.plist ]; then
+        cd rust
+        cat >$TARGET_XCFRAMEWORK_NAME/Info.plist <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -211,6 +197,6 @@ cat > ../$TARGET_XCFRAMEWORK_NAME/Info.plist << EOF
 </dict>
 </plist>
 EOF
-cd -
-fi
+        cd -
+    fi
 fi
