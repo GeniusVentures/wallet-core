@@ -64,7 +64,7 @@ if [[ "$TARGET_OS" == "android" ]]; then
         if [ -z $ARCH_ABI ] || [ "${ARCH_TABLE[$KEY]}" == "$TARGET_OS-$ARCH_ABI" ]; then
             if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/${TARGET_TABLE[$KEY]}/release/$TARGET_NAME ]; then
                 echo "Generating build for ${TARGET_TABLE[$KEY]}"
-                cargo +nightly build -Z build-std=std,panic_abort --target ${TARGET_TABLE[$KEY]} --release --lib
+                cargo build --target ${TARGET_TABLE[$KEY]} --release
             fi
             if [ -e ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ]; then
                 cp ${BUILD_FOLDER}/${TARGET_TABLE[$KEY]}/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
