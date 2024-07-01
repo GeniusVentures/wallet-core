@@ -129,10 +129,10 @@ else()
         add_library(TrustWalletCore ${TW_LIB_TYPE} ${sources})
 
         if(${IOS})
-            set(WALLET_CORE_BINDGEN_LOCATION "${CMAKE_INSTALL_PREFIX}/swift")
+            set(WALLET_CORE_BINDGEN_LOCATION ${WALLET_CORE_RS_TARGET_DIR}/aarch64-apple-ios/release)
         endif()
 
-        find_library(_RUST_WALLET_LIB HINTS ${WALLET_CORE_BINDGEN_LOCATION} NAMES ${WALLET_CORE_RS_LIB} WalletCoreRs)
+        find_library(_RUST_WALLET_LIB HINTS ${WALLET_CORE_BINDGEN_LOCATION} NAMES ${WALLET_CORE_RS_LIB})
 
         if(${IOS})
             find_library(SECURITY_FRAMEWORK Security)

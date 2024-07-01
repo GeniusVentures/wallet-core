@@ -83,15 +83,17 @@ elif [[ "$TARGET_OS" == "ios" ]]; then
             mkdir -p $BUILD_FOLDER/catalyst
             lipo $BUILD_FOLDER/aarch64-apple-ios-macabi/release/$TARGET_NAME $BUILD_FOLDER/x86_64-apple-ios-macabi/release/$TARGET_NAME -create -output $BUILD_FOLDER/catalyst/$TARGET_NAME
 
-            if [ -e ${BUILD_FOLDER}/${TARGET_NAME} ]; then
-                mkdir -p ${WALLET_OUT_DIR}/lib/darwin_universal
-                mkdir -p ${WALLET_OUT_DIR}/lib/catalyst
-
-                cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
-                cp ${BUILD_FOLDER}/darwin_universal/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/darwin_universal
-                cp ${BUILD_FOLDER}/catalyst/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/catalyst
-            fi
             create_xc_framework
+            mkdir -p ${WALLET_OUT_DIR}/lib/darwin_universal
+            mkdir -p ${WALLET_OUT_DIR}/lib/catalyst
+            mkdir -p ${WALLET_OUT_DIR}/lib/x86_64-arm64sim
+
+            cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/x86_64-arm64sim
+            cp ${BUILD_FOLDER}/darwin_universal/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/darwin_universal
+            cp ${BUILD_FOLDER}/catalyst/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/catalyst
+            cp ${TARGET_XCFRAMEWORK_NAME}/ios-arm64/${TARGET_NAME} ${WALLET_OUT_DIR}/lib
+
+            
         fi
     else
         echo "Error, Trying to build iOS on a Linux maybe?"
