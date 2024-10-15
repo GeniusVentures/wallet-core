@@ -5,8 +5,9 @@
 // file LICENSE at the root of the source code distribution tree.
 
 #include "Address.h"
+#include "Base58.h"
 
-#include "../Base58.h"
+#include <algorithm>
 #include <TrezorCrypto/ecdsa.h>
 
 namespace TW::Groestlcoin {

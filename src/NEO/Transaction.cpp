@@ -38,7 +38,6 @@ Transaction* Transaction::deserializeFrom(const Data& data, int initial_pos) {
         break;
     default:
         throw std::invalid_argument("Transaction::deserializeFrom Invalid transaction type");
-        break;
     }
     resp->deserialize(data, initial_pos);
     return resp;

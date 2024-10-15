@@ -6,6 +6,7 @@
 
 #include "Address.h"
 
+#include <algorithm>
 #include <climits>
 #include <algorithm>
 #include "../Base32.h"
