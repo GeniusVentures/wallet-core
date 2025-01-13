@@ -100,15 +100,17 @@ elif [[ "$TARGET_OS" == "ios" ]]; then
         exit 1
     fi
 elif [[ "$TARGET_OS" == "darwin" ]]; then
-    if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME ]; then
-        echo "Generating Native targets"
-        cargo build --target x86_64-apple-darwin --release
+    if [ ! -z $FORCE ] || [ ! -f $BUILD_FOLDER/$TARGET_NAME ]; then
+        echo "Generating OSX Native targets"
+        cargo build --target x86_64-apple-darwin --target aarch64-apple-darwin --release --lib &
+        wait
+        lipo $BUILD_FOLDER/x86_64-apple-darwin/release/$TARGET_NAME $BUILD_FOLDER/aarch64-apple-darwin/release/$TARGET_NAME -create -output $BUILD_FOLDER/$TARGET_NAME
         cargo build --target wasm32-unknown-emscripten --release --verbose
     fi
-    if [ -e ${BUILD_FOLDER}/x86_64-apple-darwin/release/${TARGET_NAME} ]; then
+    if [ -e ${BUILD_FOLDER}/${TARGET_NAME} ]; then
         mkdir -p ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
 
-        cp ${BUILD_FOLDER}/x86_64-apple-darwin/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/
+        cp ${BUILD_FOLDER}/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/
         cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/release/${TARGET_NAME} ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
     fi
 else
