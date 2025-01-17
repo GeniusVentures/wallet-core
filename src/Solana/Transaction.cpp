@@ -11,6 +11,7 @@
 #include "Signer.h"
 
 #include <vector>
+#include <algorithm>
 
 namespace TW::Solana {
 
