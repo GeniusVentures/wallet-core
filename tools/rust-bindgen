@@ -121,8 +121,8 @@ elif [[ "$TARGET_OS" == "darwin" ]]; then
     if [ -e ${BUILD_FOLDER}/$TARGET_NAME ]; then
         mkdir -p ${WALLET_OUT_DIR}/$CMAKE_BUILD_TYPE/lib/wasm32-unknown-emscripten
 
-        cp ${BUILD_FOLDER}/$TARGET_NAME ${WALLET_OUT_DIR}/$CMAKE_BUILD_TYPE/lib/
-        cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/$CMAKE_BUILD_TYPE/$TARGET_NAME ${WALLET_OUT_DIR}/$CMAKE_BUILD_TYPE/lib/wasm32-unknown-emscripten
+        cp ${BUILD_FOLDER}/$TARGET_NAME ${WALLET_OUT_DIR}/lib/
+        cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/$CMAKE_BUILD_TYPE/$TARGET_NAME ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
     fi
 else
     # TODO - This was called if not "android" before, so it was called when ios and whatnot?
@@ -132,10 +132,10 @@ else
         cargo build --target wasm32-unknown-emscripten $BUILD_TYPE --verbose
     fi
     if [ -e ${BUILD_FOLDER}/{CMAKE_BUILD_TYPE}$/$TARGET_NAME ]; then
-        mkdir -p ${WALLET_OUT_DIR}/$CMAKE_BUILD_TYPE/lib/wasm32-unknown-emscripten
+        mkdir -p ${WALLET_OUT_DIR}/$CMAKE_BUILD_TYPE/lib
 
         cp ${BUILD_FOLDER}/$/$TARGET_NAME ${WALLET_OUT_DIR}/$CMAKE_BUILD_TYPE/lib/
-        cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/$CMAKE_BUILD_TYPE/$TARGET_NAME ${WALLET_OUT_DIR}/$CMAKE_BUILD_TYPE/lib/wasm32-unknown-emscripten
+        cp ${BUILD_FOLDER}/wasm32-unknown-emscripten/$CMAKE_BUILD_TYPE/$TARGET_NAME ${WALLET_OUT_DIR}/lib/wasm32-unknown-emscripten
     fi
 fi
 
