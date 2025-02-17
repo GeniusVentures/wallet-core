@@ -2,12 +2,13 @@
 setlocal enabledelayedexpansion
 
 :: Initialize variables
-set "FORCE="
-set "PREFIX="
-set "WALLET_OUT_DIR="
-set "PLUGIN_DIR="
 set "ARCH="
+set "CMAKE_CONFIG="
+set "FORCE="
+set "PLUGIN_DIR="
+set "PREFIX="
 set "TARGET_OS="
+set "WALLET_OUT_DIR="
 
 :: Parse command line arguments
 
@@ -44,6 +45,11 @@ if "%~1"=="-f" (
     shift
     goto parse_args
 )
+if "%~1"=="--build-type" (
+    set "PARAM_ST=%~1"
+    shift
+    goto parse_args
+)
 if "!PARAM_ST!"=="--protobuf-dir" (
     set "PREFIX=%~1"
     shift
@@ -66,6 +72,11 @@ if "!PARAM_ST!"=="--arch-abi" (
 )
 if "!PARAM_ST!"=="--target-os" (
     set "TARGET_OS=%~1"
+    shift
+    goto parse_args
+)
+if "!PARAM_ST!"=="--build-type" (
+    set "CMAKE_CONFIG=%~1"
     shift
     goto parse_args
 )
@@ -110,12 +121,13 @@ if "%PREFIX%"=="" (
     )
 )
 
-echo PREFIX: !PREFIX!
 echo ARCH: !ARCH!
+echo CMAKE_CONFIG: !CMAKE_CONFIG!
+echo FORCE: !FORCE!
+echo PLUGIN_DIR: !PLUGIN_DIR!
+echo PREFIX: !PREFIX!
 echo TARGET_OS: !TARGET_OS!
 echo WALLET_OUT_DIR: !WALLET_OUT_DIR!
-echo PLUGIN_DIR: !PLUGIN_DIR!
-echo FORCE: !FORCE!
 
 set "PATH=!PREFIX!\bin;!PATH!"
 
@@ -174,7 +186,7 @@ set "FORCE_RUST="
 )
 
 :: Generate Rust bindgen
-call tools\win-rust-bindgen.bat --target-os=%TARGET_OS% --arch-abi=%ARCH% --out-dir=%WALLET_OUT_DIR% %FORCE_RUST%
+call tools\win-rust-bindgen.bat --target-os=%TARGET_OS% --arch-abi=%ARCH% --out-dir=%WALLET_OUT_DIR% --build-type=%CMAKE_CONFIG% %FORCE_RUST%
 
 :: Check if protoc-gen-swift is available and no command line arguments are provided
 if exist "%PREFIX%\bin\protoc-gen-swift" (

@@ -9,42 +9,19 @@
 #
 
 set -e
-CMAKE_BUILD_TYPE="Release"
+CMAKE_CONFIG="Release"
 
 for i in "$@"; do
-    case $i in
-    --protobuf-dir=*)
-        PREFIX="${i#*=}"
-        shift
-        ;;
-    --out-dir=*)
-        WALLET_OUT_DIR="${i#*=}"
-        shift
-        ;;
-    --plugin-dir=*)
-        PLUGIN_DIR="${i#*=}"
-        shift
-        ;;
-    --arch-abi=*)
-        ARCH="${i#*=}"
-        shift
-        ;;
-    --target-os=*)
-        TARGET_OS="${i#*=}"
-        shift
-        ;;
-    --build-type=*)
-      CMAKE_BUILD_TYPE="${i#*=}"
-      shift
-      ;;
-    -f | --force)
-        FORCE=YES
-        shift
-        ;;
-    -x | --xcode-gen)
-        XCODEGENERATE=YES
-        shift
-        ;;
+    echo "$i"
+    case "$i" in
+    --arch-abi=*) ARCH="${i#*=}" ;;
+    --build-type=*) CMAKE_CONFIG="${i#*=}" ;;
+    --out-dir=*) WALLET_OUT_DIR="${i#*=}" ;;
+    --plugin-dir=*) PLUGIN_DIR="${i#*=}" ;;
+    --protobuf-dir=*) PREFIX="${i#*=}" ;;
+    --target-os=*) TARGET_OS="${i#*=}" ;;
+    -f | --force) FORCE=YES ;;
+    -x | --xcode-gen) XCODEGENERATE=YES ;;
     esac
 done
 
@@ -63,13 +40,14 @@ if [ -z $PREFIX ]; then
     fi
 fi
 
-echo "PREFIX: $PREFIX"
 echo "ARCH: $ARCH"
+echo "CMAKE_CONFIG: $CMAKE_CONFIG"
+echo "FORCE: $FORCE"
+echo "PLUGIN_DIR: $PLUGIN_DIR"
+echo "PREFIX: $PREFIX"
 echo "TARGET_OS: $TARGET_OS"
 echo "WALLET_OUT_DIR: $WALLET_OUT_DIR"
-echo "PLUGIN_DIR: $PLUGIN_DIR"
-echo "FORCE: $FORCE"
-echo "CMAKE_BUILD_TYPE: $CMAKE_BUILD_TYPE"
+
 export PATH="$PREFIX/bin":$PATH
 # library paths, for protobuf plugins
 export LD_LIBRARY_PATH="$PREFIX/lib":$LD_LIBRARY_PATH
@@ -112,7 +90,7 @@ if [ ! -z $FORCE ]; then
     FORCE_RUST="-f"
 fi
 # Generate rust bindgen
-tools/rust-bindgen --target-os=$TARGET_OS --arch-abi=$ARCH --out-dir=$WALLET_OUT_DIR $FORCE_RUST --build-type=$CMAKE_BUILD_TYPE
+tools/rust-bindgen --target-os=$TARGET_OS --arch-abi=$ARCH --out-dir=$WALLET_OUT_DIR $FORCE_RUST --build-config=$CMAKE_CONFIG
 
 # Generate Java, C++ and Swift Protobuf files
 if [ -x "$(command -v protoc-gen-swift)" ] && [ $# -eq 0 ]; then
