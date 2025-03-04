@@ -90,7 +90,7 @@ if [ ! -z $FORCE ]; then
     FORCE_RUST="-f"
 fi
 # Generate rust bindgen
-tools/rust-bindgen --target-os=$TARGET_OS --arch-abi=$ARCH --out-dir=$WALLET_OUT_DIR $FORCE_RUST --build-config=$CMAKE_CONFIG
+tools/rust-bindgen --target-os=$TARGET_OS --arch-abi=$ARCH --out-dir=$WALLET_OUT_DIR $FORCE_RUST --build-type=$CMAKE_CONFIG
 
 # Generate Java, C++ and Swift Protobuf files
 if [ -x "$(command -v protoc-gen-swift)" ] && [ $# -eq 0 ]; then
