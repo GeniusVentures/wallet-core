@@ -17,7 +17,7 @@ class Generator : public  compiler::CodeGenerator {
     }
 
     bool Generate(const FileDescriptor* file, const std::string& parameter, compiler::GeneratorContext* generator_context, std::string* error) const {
-        std::unique_ptr<io::ZeroCopyOutputStream> output(generator_context->Open(GetOutputFilename(file->name())));
+        std::unique_ptr<io::ZeroCopyOutputStream> output(generator_context->Open(GetOutputFilename(std::string(file->name()))));
         io::Printer printer(output.get(), '$');
 
         printer.Print(

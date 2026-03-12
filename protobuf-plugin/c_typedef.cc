@@ -15,7 +15,7 @@ class Generator : public  compiler::CodeGenerator {
     }
 
     bool Generate(const FileDescriptor* file, const std::string& parameter, compiler::GeneratorContext* generator_context, std::string* error) const {
-        std::unique_ptr<io::ZeroCopyOutputStream> output(generator_context->Open(GetOutputFilename(file->name())));
+        std::unique_ptr<io::ZeroCopyOutputStream> output(generator_context->Open(GetOutputFilename(std::string(file->name()))));
         io::Printer printer(output.get(), '$');
 
         printer.Print(
@@ -34,7 +34,7 @@ class Generator : public  compiler::CodeGenerator {
         );
         for (int i = 0; i < file->message_type_count(); i += 1) {
             auto message = file->message_type(i);
-            auto parts = Generator::getParts(message->full_name());
+            auto parts = Generator::getParts(std::string(message->full_name()));
             if (parts.size() < 3 || parts[0] != "TW") {
                 std::cerr << "Invalid proto name '" << message->full_name() << "'" << std::endl;
                 continue;
