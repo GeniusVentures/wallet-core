@@ -75,6 +75,7 @@ find_package(Boost CONFIG REQUIRED)
 
 include(ExternalProject)
 
+find_package(ZLIB CONFIG REQUIRED)
 if (TW_USE_EXTERNAL_PROTOC)
     find_package(Protobuf CONFIG REQUIRED)
     include_directories(${Protobuf_INCLUDE_DIRS})
