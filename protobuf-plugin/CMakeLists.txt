@@ -17,7 +17,7 @@ else()
     set(PREFIX "$ENV{PREFIX}")
 endif()
 
-find_package(ZLIB CONFIG REQUIRED)
+find_package(ZLIB)
 find_package(Protobuf CONFIG REQUIRED PATH ${PREFIX}/lib/pkgconfig)
 
 add_executable(protoc-gen-c-typedef c_typedef.cc)
