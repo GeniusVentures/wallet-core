@@ -70,6 +70,16 @@ pub unsafe extern "C" fn encode_base32(
     alphabet: *const c_char,
     padding: bool,
 ) -> CStrMutResult {
+    if input.is_null() || input_len == 0 {
+        let alphabet = match get_alphabet(alphabet) {
+            Ok(alphabet) => alphabet,
+            Err(e) => return CStrMutResult::error(e),
+        };
+        return base32::encode(&[], alphabet, padding)
+            .map(|result| CString::new(result).unwrap().into_raw())
+            .map_err(CEncodingCode::from)
+            .into();
+    }
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
 
     let alphabet = match get_alphabet(alphabet) {
@@ -121,6 +131,11 @@ pub unsafe extern "C" fn encode_base58(
     input_len: usize,
     alphabet: Base58Alphabet,
 ) -> *mut c_char {
+    if input.is_null() || input_len == 0 {
+        return CString::new(base58::encode(&[], alphabet.into()))
+            .unwrap()
+            .into_raw();
+    }
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
     CString::new(base58::encode(input, alphabet.into()))
         .unwrap()
@@ -154,6 +169,10 @@ pub unsafe extern "C" fn decode_base58(
 /// \return *non-null* C-compatible, nul-terminated string.
 #[no_mangle]
 pub unsafe extern "C" fn encode_base64(data: *const u8, len: usize, is_url: bool) -> *mut c_char {
+    if data.is_null() || len == 0 {
+        let encoded = base64::encode(&[], is_url);
+        return CString::new(encoded).unwrap().into_raw();
+    }
     let data = std::slice::from_raw_parts(data, len);
     let encoded = base64::encode(data, is_url);
     CString::new(encoded).unwrap().into_raw()
@@ -204,6 +223,10 @@ pub unsafe extern "C" fn decode_hex(data: *const c_char) -> CByteArrayResult {
 /// \return *non-null* C-compatible, nul-terminated string.
 #[no_mangle]
 pub unsafe extern "C" fn encode_hex(data: *const u8, len: usize, prefixed: bool) -> *mut c_char {
+    if data.is_null() || len == 0 {
+        let encoded = hex::encode(&[], prefixed);
+        return CString::new(encoded).unwrap().into_raw();
+    }
     let data = std::slice::from_raw_parts(data, len);
     let encoded = hex::encode(data, prefixed);
     CString::new(encoded).unwrap().into_raw()
