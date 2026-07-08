@@ -32,29 +32,29 @@ void xchacha20poly1305_init(chacha20poly1305_ctx *ctx, const uint8_t key[32], co
     // Encrypt 64 bytes of zeros and use the first 32 bytes
     // as the Poly1305 key.
     ECRYPT_encrypt_bytes(&ctx->chacha20, block0, block0, 64);
-    poly1305_init(&ctx->poly1305, block0);
+    tc_poly1305_init(&ctx->poly1305, block0);
 }
 
 // Encrypt n bytes of plaintext where n must be evenly divisible by the
 // Chacha20 blocksize of 64, except for the final n bytes of plaintext.
 void chacha20poly1305_encrypt(chacha20poly1305_ctx *ctx, const uint8_t *in, uint8_t *out, size_t n) {
     ECRYPT_encrypt_bytes(&ctx->chacha20, in, out, n);
-    poly1305_update(&ctx->poly1305, out, n);
+    tc_poly1305_update(&ctx->poly1305, out, n);
 }
 
 // Decrypt n bytes of ciphertext where n must be evenly divisible by the
 // Chacha20 blocksize of 64, except for the final n bytes of ciphertext.
 void chacha20poly1305_decrypt(chacha20poly1305_ctx *ctx, const uint8_t *in, uint8_t *out, size_t n) {
-    poly1305_update(&ctx->poly1305, in, n);
+    tc_poly1305_update(&ctx->poly1305, in, n);
     ECRYPT_encrypt_bytes(&ctx->chacha20, in, out, n);
 }
 
 // Include authenticated data in the Poly1305 MAC.
 void chacha20poly1305_auth(chacha20poly1305_ctx *ctx, const uint8_t *in, size_t n) {
-    poly1305_update(&ctx->poly1305, in, n);
+    tc_poly1305_update(&ctx->poly1305, in, n);
 }
 
 // Compute NaCl secretbox-style Poly1305 MAC.
 void chacha20poly1305_finish(chacha20poly1305_ctx *ctx, uint8_t mac[16]) {
-    poly1305_finish(&ctx->poly1305, mac);
+    tc_poly1305_finish(&ctx->poly1305, mac);
 }

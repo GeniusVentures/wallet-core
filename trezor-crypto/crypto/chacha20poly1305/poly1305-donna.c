@@ -2,7 +2,7 @@
 #include <TrezorCrypto/chacha20poly1305/poly1305-donna-32.h>
 
 void
-poly1305_update(poly1305_context *ctx, const unsigned char *m, size_t bytes) {
+tc_poly1305_update(poly1305_context *ctx, const unsigned char *m, size_t bytes) {
 	poly1305_state_internal_t *st = (poly1305_state_internal_t *)ctx;
 	size_t i = 0;
 
@@ -18,14 +18,14 @@ poly1305_update(poly1305_context *ctx, const unsigned char *m, size_t bytes) {
 		st->leftover += want;
 		if (st->leftover < poly1305_block_size)
 			return;
-		poly1305_blocks(st, st->buffer, poly1305_block_size);
+		tc_poly1305_blocks(st, st->buffer, poly1305_block_size);
 		st->leftover = 0;
 	}
 
 	/* process full blocks */
 	if (bytes >= poly1305_block_size) {
 		size_t want = (bytes & ~(poly1305_block_size - 1));
-		poly1305_blocks(st, m, want);
+		tc_poly1305_blocks(st, m, want);
 		m += want;
 		bytes -= want;
 	}
@@ -39,15 +39,15 @@ poly1305_update(poly1305_context *ctx, const unsigned char *m, size_t bytes) {
 }
 
 void
-poly1305_auth(unsigned char mac[16], const unsigned char *m, size_t bytes, const unsigned char key[32]) {
+tc_poly1305_auth(unsigned char mac[16], const unsigned char *m, size_t bytes, const unsigned char key[32]) {
 	poly1305_context ctx = {0};
-	poly1305_init(&ctx, key);
-	poly1305_update(&ctx, m, bytes);
-	poly1305_finish(&ctx, mac);
+	tc_poly1305_init(&ctx, key);
+	tc_poly1305_update(&ctx, m, bytes);
+	tc_poly1305_finish(&ctx, mac);
 }
 
 int
-poly1305_verify(const unsigned char mac1[16], const unsigned char mac2[16]) {
+tc_poly1305_verify(const unsigned char mac1[16], const unsigned char mac2[16]) {
 	size_t i = 0;
 	unsigned int dif = 0;
 	for (i = 0; i < 16; i++)
@@ -137,43 +137,43 @@ poly1305_power_on_self_test(void) {
 
 	for (i = 0; i < sizeof(mac); i++)
 		mac[i] = 0;
-	poly1305_auth(mac, nacl_msg, sizeof(nacl_msg), nacl_key);
-	result &= poly1305_verify(nacl_mac, mac);
+	tc_poly1305_auth(mac, nacl_msg, sizeof(nacl_msg), nacl_key);
+	result &= tc_poly1305_verify(nacl_mac, mac);
 
 	for (i = 0; i < sizeof(mac); i++)
 		mac[i] = 0;
-	poly1305_init(&ctx, nacl_key);
-	poly1305_update(&ctx, nacl_msg +   0, 32);
-	poly1305_update(&ctx, nacl_msg +  32, 64);
-	poly1305_update(&ctx, nacl_msg +  96, 16);
-	poly1305_update(&ctx, nacl_msg + 112,  8);
-	poly1305_update(&ctx, nacl_msg + 120,  4);
-	poly1305_update(&ctx, nacl_msg + 124,  2);
-	poly1305_update(&ctx, nacl_msg + 126,  1);
-	poly1305_update(&ctx, nacl_msg + 127,  1);
-	poly1305_update(&ctx, nacl_msg + 128,  1);
-	poly1305_update(&ctx, nacl_msg + 129,  1);
-	poly1305_update(&ctx, nacl_msg + 130,  1);
-	poly1305_finish(&ctx, mac);
-	result &= poly1305_verify(nacl_mac, mac);
+	tc_poly1305_init(&ctx, nacl_key);
+	tc_poly1305_update(&ctx, nacl_msg +   0, 32);
+	tc_poly1305_update(&ctx, nacl_msg +  32, 64);
+	tc_poly1305_update(&ctx, nacl_msg +  96, 16);
+	tc_poly1305_update(&ctx, nacl_msg + 112,  8);
+	tc_poly1305_update(&ctx, nacl_msg + 120,  4);
+	tc_poly1305_update(&ctx, nacl_msg + 124,  2);
+	tc_poly1305_update(&ctx, nacl_msg + 126,  1);
+	tc_poly1305_update(&ctx, nacl_msg + 127,  1);
+	tc_poly1305_update(&ctx, nacl_msg + 128,  1);
+	tc_poly1305_update(&ctx, nacl_msg + 129,  1);
+	tc_poly1305_update(&ctx, nacl_msg + 130,  1);
+	tc_poly1305_finish(&ctx, mac);
+	result &= tc_poly1305_verify(nacl_mac, mac);
 
 	for (i = 0; i < sizeof(mac); i++)
 		mac[i] = 0;
-	poly1305_auth(mac, wrap_msg, sizeof(wrap_msg), wrap_key);
-	result &= poly1305_verify(wrap_mac, mac);
+	tc_poly1305_auth(mac, wrap_msg, sizeof(wrap_msg), wrap_key);
+	result &= tc_poly1305_verify(wrap_mac, mac);
 
-	poly1305_init(&total_ctx, total_key);
+	tc_poly1305_init(&total_ctx, total_key);
 	for (i = 0; i < 256; i++) {
 		/* set key and message to 'i,i,i..' */
 		for (j = 0; j < sizeof(all_key); j++)
 			all_key[j] = i;
 		for (j = 0; j < i; j++)
 			all_msg[j] = i;
-		poly1305_auth(mac, all_msg, i, all_key);
-		poly1305_update(&total_ctx, mac, 16);
+		tc_poly1305_auth(mac, all_msg, i, all_key);
+		tc_poly1305_update(&total_ctx, mac, 16);
 	}
-	poly1305_finish(&total_ctx, mac);
-	result &= poly1305_verify(total_mac, mac);
+	tc_poly1305_finish(&total_ctx, mac);
+	result &= tc_poly1305_verify(total_mac, mac);
 
 	return result;
 }

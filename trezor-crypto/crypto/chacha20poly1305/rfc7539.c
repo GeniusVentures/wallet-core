@@ -19,7 +19,7 @@ void rfc7539_init(chacha20poly1305_ctx *ctx, const uint8_t key[32], const uint8_
     // Encrypt 64 bytes of zeros and use the first 32 bytes
     // as the Poly1305 key.
     ECRYPT_encrypt_bytes(&ctx->chacha20, block0, block0, 64);
-    poly1305_init(&ctx->poly1305, block0);
+    tc_poly1305_init(&ctx->poly1305, block0);
 }
 
 // Include authenticated data in the Poly1305 MAC using the RFC 7539
@@ -27,9 +27,9 @@ void rfc7539_init(chacha20poly1305_ctx *ctx, const uint8_t key[32], const uint8_
 // to encryption or decryption.
 void rfc7539_auth(chacha20poly1305_ctx *ctx, const uint8_t *in, size_t n) {
     uint8_t padding[16] = {0};
-    poly1305_update(&ctx->poly1305, in, n);
+    tc_poly1305_update(&ctx->poly1305, in, n);
     if (n % 16 != 0)
-        poly1305_update(&ctx->poly1305, padding, 16 - n%16);
+        tc_poly1305_update(&ctx->poly1305, padding, 16 - n%16);
 }
 
 // Compute RFC 7539-style Poly1305 MAC.
@@ -41,8 +41,8 @@ void rfc7539_finish(chacha20poly1305_ctx *ctx, int64_t alen, int64_t plen, uint8
     memcpy(lengths + 8, &plen, sizeof(int64_t));
 
     if (plen % 16 != 0)
-        poly1305_update(&ctx->poly1305, padding, 16 - plen%16);
-    poly1305_update(&ctx->poly1305, lengths, 16);
+        tc_poly1305_update(&ctx->poly1305, padding, 16 - plen%16);
+    tc_poly1305_update(&ctx->poly1305, lengths, 16);
 
-    poly1305_finish(&ctx->poly1305, mac);
+    tc_poly1305_finish(&ctx->poly1305, mac);
 }
