@@ -111,26 +111,41 @@ struct dependent_false {
     static constexpr auto value = false;
 };
 
+struct any_type {
+    template <typename U>
+    constexpr operator U&&() const noexcept;
+};
+
+template <typename T, std::size_t... Is>
+consteval bool aggregate_initializable_impl(std::index_sequence<Is...>) {
+    return requires { T{(static_cast<void>(Is), any_type{})...}; };
+}
+
+template <typename T, std::size_t N>
+concept aggregate_initializable = aggregate_initializable_impl<T>(std::make_index_sequence<N>{});
+
 template <aggregate_struct T>
 constexpr auto to_tuple(T&& t) {
+    using tuple_type = std::remove_cvref_t<T>;
+
     if constexpr (std::is_empty_v<T>) {
         return std::make_tuple();
-    } else if constexpr (requires { [&t] { auto&& [a0] = t; }; }) {
+    } else if constexpr (aggregate_initializable<tuple_type, 1> && !aggregate_initializable<tuple_type, 2>) {
         auto&& [a0] = std::forward<T>(t);
         return std::make_tuple(a0);
-    } else if constexpr (requires { [&t] { auto&& [a0, a1] = t; }; }) {
+    } else if constexpr (aggregate_initializable<tuple_type, 2> && !aggregate_initializable<tuple_type, 3>) {
         auto&& [a0, a1] = std::forward<T>(t);
         return std::make_tuple(a0, a1);
-    } else if constexpr (requires { [&t] { auto&& [a0, a1, a2] = t; }; }) {
+    } else if constexpr (aggregate_initializable<tuple_type, 3> && !aggregate_initializable<tuple_type, 4>) {
         auto&& [a0, a1, a2] = std::forward<T>(t);
         return std::make_tuple(a0, a1, a2);
-    } else if constexpr (requires { [&t] { auto&& [a0, a1, a2, a3] = t; }; }) {
+    } else if constexpr (aggregate_initializable<tuple_type, 4> && !aggregate_initializable<tuple_type, 5>) {
         auto&& [a0, a1, a2, a3] = std::forward<T>(t);
         return std::make_tuple(a0, a1, a2, a3);
-    } else if constexpr (requires { [&t] { auto&& [a0, a1, a2, a3, a4] = t; }; }) {
+    } else if constexpr (aggregate_initializable<tuple_type, 5> && !aggregate_initializable<tuple_type, 6>) {
         auto&& [a0, a1, a2, a3, a4] = std::forward<T>(t);
         return std::make_tuple(a0, a1, a2, a3, a4);
-    } else if constexpr (requires { [&t] { auto&& [a0, a1, a2, a3, a4, a5] = t; }; }) {
+    } else if constexpr (aggregate_initializable<tuple_type, 6> && !aggregate_initializable<tuple_type, 7>) {
         auto&& [a0, a1, a2, a3, a4, a5] = std::forward<T>(t);
         return std::make_tuple(a0, a1, a2, a3, a4, a5);
     } else {
