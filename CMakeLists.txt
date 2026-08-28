@@ -157,6 +157,11 @@ if (TW_CLANG_ASAN)
     target_enable_asan(TrustWalletCore)
 endif ()
 
+# nlohmann/json include dir; overridable so super-builds can point at their own copy
+# instead of the pinned submodule under thirdparty/json (which lags behind upstream).
+set(WALLET_CORE_JSON_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/json/include"
+        CACHE PATH "Path to the nlohmann/json include directory")
+
 # Define headers for this library. PUBLIC headers are used for compiling the
 # library, and will be added to consumers' build paths.
 target_include_directories(TrustWalletCore
@@ -167,7 +172,7 @@ target_include_directories(TrustWalletCore
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/jni/cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/build/local/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/json/include
+        ${WALLET_CORE_JSON_INCLUDE_DIR}
         )
 
 if (TW_UNIT_TESTS)
